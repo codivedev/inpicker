@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { PinLogin } from '@/features/auth/components/PinLogin';
 

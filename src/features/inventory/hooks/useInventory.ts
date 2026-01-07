@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { db, type UserPencil } from '@/lib/db';
+import { db } from '@/lib/db';
 import pencilsData from '@/data/pencils.json';
 import type { Pencil } from '@/types/pencil';
 import { useLiveQuery } from 'dexie-react-hooks';

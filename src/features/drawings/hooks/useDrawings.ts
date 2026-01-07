@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, type Drawing } from '@/lib/db';
+import { db } from '@/lib/db';
 
 export function useDrawings() {
     const drawings = useLiveQuery(() => db.drawings.orderBy('createdAt').reverse().toArray(), []);
