@@ -10,8 +10,12 @@ interface Transform {
     scale: number;
 }
 
-export function useImagePicker() {
-    const [imageSrc, setImageSrc] = useState<string | null>(null);
+interface UseImagePickerOptions {
+    initialImage?: string | null;
+}
+
+export function useImagePicker(options: UseImagePickerOptions = {}) {
+    const [imageSrc, setImageSrc] = useState<string | null>(options.initialImage || null);
     const [transform, setTransform] = useState<Transform>({ x: 0, y: 0, scale: 1 });
     const [pickedColor, setPickedColor] = useState<string | null>(null); // Hex
     const [loupePos, setLoupePos] = useState<{ x: number, y: number } | null>(null);
@@ -23,6 +27,13 @@ export function useImagePicker() {
     const imageRef = useRef<HTMLImageElement | null>(null);
 
     useInventory(); // Pour plus tard si on filtre par inventaire
+
+    // Mettre à jour l'image si initialImage change
+    useEffect(() => {
+        if (options.initialImage && !imageSrc) {
+            setImageSrc(options.initialImage);
+        }
+    }, [options.initialImage]);
 
     // Gestion de l'import image
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {

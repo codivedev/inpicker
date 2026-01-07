@@ -1,13 +1,43 @@
+// Utilisateurs pour le mode développement local (même config que functions/api/auth/verify-pin.ts)
+const LOCAL_USERS: Record<string, { pin: string; name: string; isAdmin?: boolean }> = {
+    "yaelle": { pin: "141116", name: "Yaëlle" },
+    "renaud": { pin: "246809", name: "Renaud", isAdmin: true },
+};
+
 export const cloudflareApi = {
     // ========== AUTH ==========
-    async verifyPin(pin: string): Promise<boolean> {
-        const res = await fetch('/api/auth/verify-pin', {
-            method: 'POST',
-            body: JSON.stringify({ pin }),
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include' // Important pour les cookies
-        });
-        return res.ok;
+    async verifyPin(pin: string): Promise<{ id: string, name: string, isAdmin?: boolean } | null> {
+        try {
+            const res = await fetch('/api/auth/verify-pin', {
+                method: 'POST',
+                body: JSON.stringify({ pin }),
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include'
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                return data.user;
+            }
+
+            // Si 401, le PIN est invalide
+            if (res.status === 401) {
+                return null;
+            }
+
+            // Autre erreur → fallback local
+            throw new Error('API non disponible');
+        } catch {
+            // Fallback local pour le développement
+            console.warn('[DEV] API non disponible, utilisation du fallback local');
+            const userEntry = Object.entries(LOCAL_USERS).find(([, user]) => user.pin === pin);
+
+            if (userEntry) {
+                const [userId, user] = userEntry;
+                return { id: userId, name: user.name, isAdmin: user.isAdmin };
+            }
+            return null;
+        }
     },
 
     // ========== INVENTORY ==========
@@ -97,6 +127,110 @@ export const cloudflareApi = {
 
     getImageUrl(key: string): string {
         return `/api/images/${key}`;
+    },
+
+    // ========== ADMIN ==========
+    async getAdminStats() {
+        const res = await fetch('/api/admin/stats', {
+            credentials: 'include'
+        });
+        if (!res.ok) {
+            if (res.status === 401) throw new Error('Session expirée');
+            if (res.status === 403) throw new Error('Accès refusé');
+
+            let errorMessage = `Erreur serveur (${res.status})`;
+            try {
+                const errorData = await res.json();
+                if (errorData && errorData.error) {
+                    errorMessage = errorData.error;
+                }
+            } catch (e) {
+                // Ignore json parse error
+            }
+            throw new Error(errorMessage);
+        }
+        return res.json();
+    },
+
+    async getAdminUsers() {
+        const res = await fetch('/api/admin/users', {
+            credentials: 'include'
+        });
+        if (!res.ok) {
+            if (res.status === 401) throw new Error('Session expirée');
+            if (res.status === 403) throw new Error('Accès refusé');
+
+            let errorMessage = `Erreur serveur (${res.status})`;
+            try {
+                const errorData = await res.json();
+                if (errorData && errorData.error) {
+                    errorMessage = errorData.error;
+                }
+            } catch (e) {
+                // Ignore json parse error
+            }
+            throw new Error(errorMessage);
+        }
+        return res.json();
+    },
+
+    async createUser(data: { id: string, name: string, pin: string, isAdmin?: boolean }) {
+        const res = await fetch('/api/admin/users', {
+            method: 'POST',
+            body: JSON.stringify(data),
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include'
+        });
+        if (!res.ok) {
+            const error = await res.json();
+            throw new Error(error.error || 'Erreur lors de la création');
+        }
+        return res.json();
+    },
+
+    async updateUser(data: { id: string, name?: string, pin?: string, isAdmin?: boolean }) {
+        const res = await fetch('/api/admin/users', {
+            method: 'PUT',
+            body: JSON.stringify(data),
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include'
+        });
+        if (!res.ok) {
+            const error = await res.json();
+            throw new Error(error.error || 'Erreur lors de la modification');
+        }
+        return res.json();
+    },
+
+    async deleteUser(id: string) {
+        const res = await fetch(`/api/admin/users?id=${id}`, {
+            method: 'DELETE',
+            credentials: 'include'
+        });
+        if (!res.ok) {
+            const error = await res.json();
+            throw new Error(error.error || 'Erreur lors de la suppression');
+        }
+        return res.json();
+    },
+
+    async getAdminDrawings() {
+        const res = await fetch('/api/admin/drawings', {
+            credentials: 'include'
+        });
+        if (!res.ok) {
+            if (res.status === 403) throw new Error('Accès refusé');
+            throw new Error('Erreur lors de la récupération des dessins');
+        }
+        return res.json();
+    },
+
+    async deleteAdminDrawing(id: number) {
+        const res = await fetch(`/api/admin/drawings?id=${id}`, {
+            method: 'DELETE',
+            credentials: 'include'
+        });
+        if (!res.ok) throw new Error('Erreur lors de la suppression');
+        return res.json();
     }
 };
-

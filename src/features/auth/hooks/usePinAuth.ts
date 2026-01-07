@@ -6,19 +6,19 @@ export function usePinAuth() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [attemptCount, setAttemptCount] = useState(0);
 
-    const verifyPin = async (pin: string): Promise<boolean> => {
+    const verifyPin = async (pin: string): Promise<{ id: string, name: string, isAdmin?: boolean } | null> => {
         // Vérifier si verrouillé
         if (lockedUntil && lockedUntil > new Date()) {
-            return false;
+            return null;
         }
 
         try {
-            const success = await cloudflareApi.verifyPin(pin);
+            const userData = await cloudflareApi.verifyPin(pin);
 
-            if (success) {
+            if (userData) {
                 setIsAuthenticated(true);
                 setAttemptCount(0);
-                return true;
+                return userData;
             } else {
                 // Échec - incrémenter les tentatives
                 const newCount = attemptCount + 1;
@@ -31,11 +31,11 @@ export function usePinAuth() {
                     setLockedUntil(lockTime);
                 }
 
-                return false;
+                return null;
             }
         } catch (error) {
             console.error('Erreur d\'authentification:', error);
-            return false;
+            return null;
         }
     };
 

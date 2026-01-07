@@ -5,19 +5,20 @@ import { usePinAuth } from '../hooks/usePinAuth';
 import { cn } from '@/lib/utils';
 
 interface PinLoginProps {
-    onSuccess: () => void;
+    onSuccess: (user: { id: string, name: string, isAdmin?: boolean }) => void;
 }
 
 export function PinLogin({ onSuccess }: PinLoginProps) {
     const [pin, setPin] = useState('');
     const [errorShake, setErrorShake] = useState(0);
     const { verifyPin, lockedUntil, isAuthenticated } = usePinAuth();
+    const [loggedInUser, setLoggedInUser] = useState<{ id: string, name: string, isAdmin?: boolean } | null>(null);
 
     useEffect(() => {
-        if (isAuthenticated) {
-            setTimeout(onSuccess, 500); // Délai pour l'animation succès
+        if (isAuthenticated && loggedInUser) {
+            setTimeout(() => onSuccess(loggedInUser), 500); // Délai pour l'animation succès
         }
-    }, [isAuthenticated, onSuccess]);
+    }, [isAuthenticated, loggedInUser, onSuccess]);
 
     const handleNumClick = (num: number) => {
         if (lockedUntil) return;
@@ -34,10 +35,12 @@ export function PinLogin({ onSuccess }: PinLoginProps) {
     const handleSubmit = async () => {
         if (pin.length !== 6) return;
 
-        const isValid = await verifyPin(pin);
-        if (!isValid) {
+        const user = await verifyPin(pin);
+        if (user) {
+            setLoggedInUser(user);
+        } else {
             setErrorShake(prev => prev + 1);
-            setPin(''); // Reset only on error? Or keep it? Reset is better UX for PINs usually
+            setPin('');
         }
     };
 

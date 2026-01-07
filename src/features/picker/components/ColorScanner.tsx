@@ -43,29 +43,109 @@ export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
     const handleTouch = (e: React.MouseEvent | React.TouchEvent) => {
         if (!canvasRef.current || !imageRef.current || !containerRef.current || !imageSrc) return;
 
-        const rect = imageRef.current.getBoundingClientRect();
+        const img = imageRef.current;
+        const rect = img.getBoundingClientRect();
+
+        // Dimensions naturelles de l'image
+        const naturalWidth = img.naturalWidth;
+        const naturalHeight = img.naturalHeight;
+
+        // Calculer la taille réelle de l'image affichée avec object-contain
+        const containerAspect = rect.width / rect.height;
+        const imageAspect = naturalWidth / naturalHeight;
+
+        let displayedWidth: number;
+        let displayedHeight: number;
+        let offsetX: number;
+        let offsetY: number;
+
+        if (imageAspect > containerAspect) {
+            // L'image est plus large que le conteneur → limitée par la largeur
+            displayedWidth = rect.width;
+            displayedHeight = rect.width / imageAspect;
+            offsetX = 0;
+            offsetY = (rect.height - displayedHeight) / 2;
+        } else {
+            // L'image est plus haute que le conteneur → limitée par la hauteur
+            displayedHeight = rect.height;
+            displayedWidth = rect.height * imageAspect;
+            offsetX = (rect.width - displayedWidth) / 2;
+            offsetY = 0;
+        }
 
         const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
         const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
 
-        // Position relative à l'image affichée
-        const x = clientX - rect.left;
-        const y = clientY - rect.top;
+        // Position relative au conteneur img
+        const xInContainer = clientX - rect.left;
+        const yInContainer = clientY - rect.top;
+
+        // Position relative à l'image affichée (en enlevant les offsets de centrage)
+        const xInImage = xInContainer - offsetX;
+        const yInImage = yInContainer - offsetY;
+
+        // Vérifier si le clic est dans la zone de l'image visible
+        if (xInImage < 0 || xInImage > displayedWidth || yInImage < 0 || yInImage > displayedHeight) {
+            return; // Clic en dehors de l'image visible
+        }
 
         // Ratio pour obtenir la position sur le canvas original
-        const scaleX = imageRef.current.naturalWidth / rect.width;
-        const scaleY = imageRef.current.naturalHeight / rect.height;
+        const scaleX = naturalWidth / displayedWidth;
+        const scaleY = naturalHeight / displayedHeight;
 
-        const sourceX = Math.floor(x * scaleX);
-        const sourceY = Math.floor(y * scaleY);
+        const sourceX = Math.floor(xInImage * scaleX);
+        const sourceY = Math.floor(yInImage * scaleY);
 
-        const ctx = canvasRef.current.getContext('2d');
+        // Validation des limites
+        if (sourceX < 0 || sourceX >= naturalWidth || sourceY < 0 || sourceY >= naturalHeight) {
+            return;
+        }
+
+        const ctx = canvasRef.current.getContext('2d', { willReadFrequently: true });
         if (!ctx) return;
 
-        const p = ctx.getImageData(sourceX, sourceY, 1, 1).data;
-        // Hex conversion
-        const hex = `#${((1 << 24) + (p[0] << 16) + (p[1] << 8) + p[2]).toString(16).slice(1).toUpperCase()}`;
+        // Moyenne des pixels environnants pour plus de stabilité (3x3)
+        let r = 0, g = 0, b = 0, count = 0;
+        const radius = 1;
 
+        try {
+            const startX = Math.max(0, sourceX - radius);
+            const startY = Math.max(0, sourceY - radius);
+            const endX = Math.min(naturalWidth, sourceX + radius + 1);
+            const endY = Math.min(naturalHeight, sourceY + radius + 1);
+
+            const pixelData = ctx.getImageData(startX, startY, endX - startX, endY - startY).data;
+
+            for (let i = 0; i < pixelData.length; i += 4) {
+                if (pixelData[i + 3] > 0) { // Ignorer les pixels transparents
+                    r += pixelData[i];
+                    g += pixelData[i + 1];
+                    b += pixelData[i + 2];
+                    count++;
+                }
+            }
+
+            if (count > 0) {
+                r = Math.round(r / count);
+                g = Math.round(g / count);
+                b = Math.round(b / count);
+            } else {
+                // Fallback sur un seul pixel
+                const p = ctx.getImageData(sourceX, sourceY, 1, 1).data;
+                r = p[0];
+                g = p[1];
+                b = p[2];
+            }
+        } catch {
+            // Fallback en cas d'erreur
+            const p = ctx.getImageData(sourceX, sourceY, 1, 1).data;
+            r = p[0];
+            g = p[1];
+            b = p[2];
+        }
+
+        // Hex conversion
+        const hex = `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase()}`;
         setPickedColor(hex);
     };
 

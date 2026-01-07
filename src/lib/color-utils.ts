@@ -103,10 +103,10 @@ function calculateConfidence(deltaE: number): number {
 }
 
 /**
- * Retourne l'ID unique (Brand|ID)
+ * Retourne l'ID unique (Brand-ID)
  */
 export function getPencilId(p: Pencil): string {
-    return `${p.brand}|${p.id}`;
+    return `${p.brand}-${p.id}`;
 }
 
 export function getAllPencils(): Pencil[] {

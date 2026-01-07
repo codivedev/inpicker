@@ -3,20 +3,26 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { getPencilId, hexToRgb } from '@/lib/color-utils';
 import type { MatchResult } from '@/lib/color-utils';
 import { useInventory } from '@/features/inventory/hooks/useInventory';
-import { Check, AlertTriangle, X, Info } from 'lucide-react';
+import { Check, AlertTriangle, X, Info, Bookmark, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { DrawingPicker } from '@/features/drawings/components/DrawingPicker';
+import { useDrawings } from '@/features/drawings/hooks/useDrawings';
 
 interface ColorResultProps {
     color: string | null;
     match: MatchResult | null;
     alternatives: MatchResult[];
+    drawingId?: number;
 }
 
 type ViewMode = 'summary' | 'alternatives' | 'details';
 
-export function ColorResult({ color, match, alternatives }: ColorResultProps) {
+export function ColorResult({ color, match, alternatives, drawingId }: ColorResultProps) {
     const { isOwned } = useInventory();
+    const { addPencilToDrawing } = useDrawings();
     const [viewMode, setViewMode] = useState<ViewMode>('summary');
+    const [showDrawingPicker, setShowDrawingPicker] = useState(false);
+    const [addedToDrawing, setAddedToDrawing] = useState(false);
 
     if (!color || !match) return null;
 
@@ -195,7 +201,34 @@ export function ColorResult({ color, match, alternatives }: ColorResultProps) {
 
                     {/* Boutons Actions */}
                     {viewMode === 'summary' && (
-                        <div className="mt-4 pt-4 border-t flex space-x-3">
+                        <div className="mt-4 pt-4 border-t flex space-x-2">
+                            {/* Bouton ajout au dessin - différent selon le contexte */}
+                            {drawingId ? (
+                                <button
+                                    onClick={async () => {
+                                        await addPencilToDrawing(drawingId, getPencilId(match.pencil));
+                                        setAddedToDrawing(true);
+                                    }}
+                                    disabled={addedToDrawing}
+                                    className={cn(
+                                        "flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-colors",
+                                        addedToDrawing
+                                            ? "bg-green-500/10 text-green-500"
+                                            : "bg-amber-500/10 hover:bg-amber-500/20 text-amber-500"
+                                    )}
+                                >
+                                    {addedToDrawing ? <Check size={16} /> : <Plus size={16} />}
+                                    {addedToDrawing ? 'Ajouté' : 'Ajouter'}
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={() => setShowDrawingPicker(true)}
+                                    className="p-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 transition-colors"
+                                    title="Ajouter à un dessin"
+                                >
+                                    <Bookmark size={18} />
+                                </button>
+                            )}
                             <button
                                 onClick={() => setViewMode('alternatives')}
                                 className="flex-1 py-2 rounded-xl bg-secondary hover:bg-secondary/80 text-sm font-medium transition-colors"
@@ -212,6 +245,14 @@ export function ColorResult({ color, match, alternatives }: ColorResultProps) {
                     )}
                 </div>
             </motion.div>
+
+            {/* Drawing Picker Modal */}
+            <DrawingPicker
+                isOpen={showDrawingPicker}
+                onClose={() => setShowDrawingPicker(false)}
+                onSelect={() => setShowDrawingPicker(false)}
+                pencilId={getPencilId(match.pencil)}
+            />
         </AnimatePresence>
     );
 }

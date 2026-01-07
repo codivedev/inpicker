@@ -2,10 +2,10 @@ import { motion } from 'framer-motion';
 import { PinLogin } from '@/features/auth/components/PinLogin';
 
 interface LoginPageProps {
-    onLoginSuccess: () => void;
+    onSuccess: (user: { id: string, name: string, isAdmin?: boolean }) => void;
 }
 
-export function LoginPage({ onLoginSuccess }: LoginPageProps) {
+export function LoginPage({ onSuccess }: LoginPageProps) {
     return (
         <div className="relative min-h-screen w-full overflow-hidden bg-black text-white selection:bg-primary/30">
             {/* Background Animé */}
@@ -38,7 +38,7 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8, delay: 0.2 }}
                 >
-                    <PinLogin onSuccess={onLoginSuccess} />
+                    <PinLogin onSuccess={onSuccess} />
                 </motion.div>
 
                 <div className="mt-16 text-center text-xs text-white/20">

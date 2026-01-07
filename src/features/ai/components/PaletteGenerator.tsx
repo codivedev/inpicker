@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Wand2, Upload, Loader2, Save } from 'lucide-react';
+import { ArrowLeft, Wand2, Upload, Loader2, Save, Bookmark } from 'lucide-react';
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { useInventory } from '@/features/inventory/hooks/useInventory';
+import { DrawingPicker } from '@/features/drawings/components/DrawingPicker';
 
 // Initialize Gemini
 const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GOOGLE_API_KEY);
@@ -25,6 +26,7 @@ export function PaletteGenerator() {
     const [analyzing, setAnalyzing] = useState(false);
     const [palette, setPalette] = useState<AIPaletteColor[]>([]);
     const [error, setError] = useState<string | null>(null);
+    const [selectedPencilForDrawing, setSelectedPencilForDrawing] = useState<string | null>(null);
 
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -157,33 +159,43 @@ export function PaletteGenerator() {
                         <h3 className="font-bold text-lg mb-2">Palette Suggérée ({palette.length})</h3>
                     )}
 
-                    {palette.map((item, idx) => (
-                        <div key={idx} className="flex items-center gap-4 p-3 rounded-xl bg-card border shadow-sm animate-in fade-in slide-in-from-bottom-4" style={{ animationDelay: `${idx * 0.1}s` }}>
-                            <div
-                                className="w-12 h-12 rounded-full border shadow-inner shrink-0"
-                                style={{ backgroundColor: item.hex }}
-                            />
-                            <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 mb-0.5">
-                                    <span className="font-bold truncate">{item.pencil.name}</span>
-                                    <span className="text-[10px] uppercase px-1.5 py-0.5 rounded bg-secondary text-muted-foreground font-mono">
-                                        {item.pencil.id}
-                                    </span>
+                    {palette.map((item, idx) => {
+                        const pencilId = `${item.pencil.brand}-${item.pencil.id}`;
+                        return (
+                            <div key={idx} className="flex items-center gap-4 p-3 rounded-xl bg-card border shadow-sm animate-in fade-in slide-in-from-bottom-4" style={{ animationDelay: `${idx * 0.1}s` }}>
+                                <div
+                                    className="w-12 h-12 rounded-full border shadow-inner shrink-0"
+                                    style={{ backgroundColor: item.hex }}
+                                />
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-0.5">
+                                        <span className="font-bold truncate">{item.pencil.name}</span>
+                                        <span className="text-[10px] uppercase px-1.5 py-0.5 rounded bg-secondary text-muted-foreground font-mono">
+                                            {item.pencil.id}
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-xs text-muted-foreground">
+                                        <span>{item.pencil.brand}</span>
+                                        <span style={{ color: item.hex }}>● {item.description}</span>
+                                    </div>
                                 </div>
-                                <div className="flex justify-between items-center text-xs text-muted-foreground">
-                                    <span>{item.pencil.brand}</span>
-                                    <span style={{ color: item.hex }}>● {item.description}</span>
-                                </div>
+                                <button
+                                    onClick={() => setSelectedPencilForDrawing(pencilId)}
+                                    className="p-2 rounded-full hover:bg-amber-500/10 transition-colors text-amber-500"
+                                    title="Ajouter à un dessin"
+                                >
+                                    <Bookmark size={18} />
+                                </button>
+                                <button
+                                    onClick={() => handleSavePencil(item)}
+                                    className="p-2 rounded-full hover:bg-secondary transition-colors text-primary"
+                                    title="Ajouter à l'inventaire"
+                                >
+                                    <Save size={20} />
+                                </button>
                             </div>
-                            <button
-                                onClick={() => handleSavePencil(item)}
-                                className="p-2 rounded-full hover:bg-secondary transition-colors text-primary"
-                                title="Ajouter à l'inventaire"
-                            >
-                                <Save size={20} />
-                            </button>
-                        </div>
-                    ))}
+                        );
+                    })}
 
                     {!analyzing && !image && (
                         <div className="h-full flex flex-col items-center justify-center text-muted-foreground text-center p-8 opacity-50 border-2 border-dashed border-border rounded-3xl">
@@ -193,6 +205,14 @@ export function PaletteGenerator() {
                     )}
                 </div>
             </div>
+
+            {/* Drawing Picker Modal */}
+            <DrawingPicker
+                isOpen={!!selectedPencilForDrawing}
+                onClose={() => setSelectedPencilForDrawing(null)}
+                onSelect={() => setSelectedPencilForDrawing(null)}
+                pencilId={selectedPencilForDrawing || ''}
+            />
         </div>
     );
 }

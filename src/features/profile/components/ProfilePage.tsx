@@ -17,6 +17,7 @@ export function ProfilePage() {
 
     const handleLogout = () => {
         localStorage.removeItem('inpicker_auth');
+        localStorage.removeItem('inpicker_user_name');
         window.location.href = '/';
     };
 

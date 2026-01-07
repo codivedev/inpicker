@@ -42,13 +42,13 @@ export function DrawingsManager() {
             )}
 
             {/* Grid */}
-            <div className="grid grid-cols-2 gap-4 p-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 p-4">
                 {drawings?.map(drawing => (
                     <motion.div
                         key={drawing.id}
                         layoutId={`drawing-${drawing.id}`}
-                        onClick={() => navigate(`/drawings/${drawing.id}`)}
-                        className="aspect-[3/4] rounded-2xl bg-secondary/30 border border-border overflow-hidden relative group cursor-pointer"
+                        onClick={() => navigate(`/dessins/${drawing.id}`)}
+                        className="aspect-square rounded-xl bg-secondary/30 border border-border overflow-hidden relative group cursor-pointer"
                     >
                         {drawing.imageBase64 ? (
                             <img
@@ -62,9 +62,9 @@ export function DrawingsManager() {
                             </div>
                         )}
 
-                        <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/80 to-transparent pt-10">
-                            <h3 className="text-white font-medium truncate">{drawing.title}</h3>
-                            <p className="text-white/60 text-xs">{drawing.pencilIds.length} crayons</p>
+                        <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/80 to-transparent pt-6">
+                            <h3 className="text-white font-medium truncate text-sm">{drawing.title}</h3>
+                            <p className="text-white/60 text-xs">{drawing.pencilIds.length} crayon{drawing.pencilIds.length !== 1 ? 's' : ''}</p>
                         </div>
                     </motion.div>
                 ))}

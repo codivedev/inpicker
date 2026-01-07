@@ -10,13 +10,18 @@ import {
     Wand2,
     ChevronRight,
     Palette,
-    Brush
+    Brush,
+    Crown
 } from 'lucide-react';
 import { useTheme } from '@/components/theme-provider';
 import { useDrawings } from '@/features/drawings/hooks/useDrawings';
 import { useInventory } from '@/features/inventory/hooks/useInventory';
 
-export function Dashboard() {
+interface DashboardProps {
+    isAdmin?: boolean;
+}
+
+export function Dashboard({ isAdmin = false }: DashboardProps) {
     const navigate = useNavigate();
     const { setTheme, theme } = useTheme();
     const { drawings } = useDrawings();
@@ -52,6 +57,15 @@ export function Dashboard() {
                 </div>
 
                 <div className="flex items-center gap-3">
+                    {isAdmin && (
+                        <button
+                            onClick={() => navigate('/administration')}
+                            className="p-2.5 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 hover:opacity-90 transition-opacity text-white relative flex items-center justify-center overflow-hidden w-10 h-10 shadow-lg"
+                            title="Administration"
+                        >
+                            <Crown className="h-5 w-5" />
+                        </button>
+                    )}
                     <button
                         onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
                         className="p-2.5 rounded-full bg-secondary hover:bg-secondary/80 transition-colors text-foreground relative flex items-center justify-center overflow-hidden w-10 h-10"
