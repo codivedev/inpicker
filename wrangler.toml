@@ -1,0 +1,12 @@
+name = "inpicker"
+compatibility_date = "2026-01-07"
+pages_build_output_dir = "dist"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "inpicker-db"
+database_id = "19649eb0-3b7e-4689-acbf-5e28ee4cbc9a"
+
+[[r2_buckets]]
+binding = "IMAGES"
+bucket_name = "inpicker-images"
