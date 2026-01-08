@@ -1,10 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Plus, Trash2, Image as ImageIcon, Pencil, Camera, Search } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Image as ImageIcon, Pencil, Camera, Search, Loader2 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useDrawings } from '../hooks/useDrawings';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '@/lib/db';
+import { useDrawings, useDrawing } from '../hooks/useDrawings';
+import { cloudflareApi } from '@/lib/cloudflare-api';
 import pencilsData from '@/data/pencils.json';
 import { PencilPicker } from './PencilPicker';
 
@@ -13,15 +12,30 @@ export function DrawingDetail() {
     const { id } = useParams<{ id: string }>();
     const drawingId = parseInt(id || '0', 10);
 
-    const { deleteDrawing, removePencilFromDrawing, updateDrawingImage, addPencilToDrawing } = useDrawings();
-    const drawing = useLiveQuery(() => db.drawings.get(drawingId), [drawingId]);
+    const { deleteDrawing, removePencilFromDrawing, updateDrawingImage, addPencilToDrawing, updateDrawing } = useDrawings();
+    const { data: drawing, isLoading, error } = useDrawing(drawingId);
 
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [showPencilPicker, setShowPencilPicker] = useState(false);
     const [isEditingTitle, setIsEditingTitle] = useState(false);
     const [editedTitle, setEditedTitle] = useState('');
 
-    if (!drawing) {
+    // Mettre à jour le titre édité quand le dessin est chargé
+    useEffect(() => {
+        if (drawing) {
+            setEditedTitle(drawing.title);
+        }
+    }, [drawing?.title]);
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-background flex items-center justify-center">
+                <Loader2 className="animate-spin text-primary" size={32} />
+            </div>
+        );
+    }
+
+    if (error || !drawing) {
         return (
             <div className="min-h-screen bg-background flex items-center justify-center">
                 <div className="text-center">
@@ -55,12 +69,12 @@ export function DrawingDetail() {
     }).filter(Boolean);
 
     const handleDelete = async () => {
-        await deleteDrawing(drawingId);
+        deleteDrawing(drawingId);
         navigate('/mes-dessins');
     };
 
-    const handleRemovePencil = async (pencilId: string) => {
-        await removePencilFromDrawing(drawingId, pencilId);
+    const handleRemovePencil = (pencilId: string) => {
+        removePencilFromDrawing(drawingId, pencilId);
     };
 
     const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -76,12 +90,15 @@ export function DrawingDetail() {
         reader.readAsDataURL(file);
     };
 
-    const handleTitleSave = async () => {
-        if (editedTitle.trim()) {
-            await db.drawings.update(drawingId, { title: editedTitle.trim() });
+    const handleTitleSave = () => {
+        if (editedTitle.trim() && editedTitle.trim() !== drawing.title) {
+            updateDrawing(drawingId, editedTitle.trim());
         }
         setIsEditingTitle(false);
     };
+
+    // Construire l'URL de l'image
+    const imageUrl = drawing.image_r2_key ? cloudflareApi.getImageUrl(drawing.image_r2_key) : null;
 
     return (
         <div className="min-h-screen bg-background pb-20">
@@ -133,10 +150,10 @@ export function DrawingDetail() {
                         className="hidden"
                     />
 
-                    {drawing.imageBase64 ? (
+                    {imageUrl ? (
                         <>
                             <img
-                                src={drawing.imageBase64}
+                                src={imageUrl}
                                 alt={drawing.title}
                                 className="w-full h-full object-contain"
                             />
@@ -172,7 +189,7 @@ export function DrawingDetail() {
                             onClick={() => navigate('/scanner-couleur', {
                                 state: {
                                     drawingId,
-                                    initialImage: drawing.imageBase64
+                                    initialImage: imageUrl
                                 }
                             })}
                             className="flex items-center gap-2 px-3 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium"
@@ -267,8 +284,8 @@ export function DrawingDetail() {
             <PencilPicker
                 isOpen={showPencilPicker}
                 onClose={() => setShowPencilPicker(false)}
-                onSelect={async (pencilId) => {
-                    await addPencilToDrawing(drawingId, pencilId);
+                onSelect={(pencilId) => {
+                    addPencilToDrawing(drawingId, pencilId);
                     setShowPencilPicker(false);
                 }}
                 excludedPencilIds={drawing.pencilIds}

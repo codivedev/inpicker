@@ -103,12 +103,55 @@ export const cloudflareApi = {
         return res.json();
     },
 
+    async getDrawing(id: number) {
+        const res = await fetch(`/api/drawings?id=${id}`, {
+            credentials: 'include'
+        });
+        if (!res.ok) throw new Error('Erreur lors de la récupération du dessin');
+        return res.json();
+    },
+
     async deleteDrawing(id: number) {
         const res = await fetch(`/api/drawings?id=${id}`, {
             method: 'DELETE',
             credentials: 'include'
         });
         if (!res.ok) throw new Error('Erreur lors de la suppression');
+        return res.json();
+    },
+
+    async updateDrawing(id: number, data: { title?: string; imageFile?: File }) {
+        const formData = new FormData();
+        formData.append('id', id.toString());
+        if (data.title) formData.append('title', data.title);
+        if (data.imageFile) formData.append('image', data.imageFile);
+
+        const res = await fetch('/api/drawings', {
+            method: 'PUT',
+            body: formData,
+            credentials: 'include'
+        });
+        if (!res.ok) throw new Error('Erreur lors de la mise à jour');
+        return res.json();
+    },
+
+    async addPencilToDrawing(drawingId: number, pencilId: string) {
+        const res = await fetch('/api/drawings-pencils', {
+            method: 'POST',
+            body: JSON.stringify({ drawingId, pencilId }),
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include'
+        });
+        if (!res.ok) throw new Error('Erreur lors de l\'ajout du crayon');
+        return res.json();
+    },
+
+    async removePencilFromDrawing(drawingId: number, pencilId: string) {
+        const res = await fetch(`/api/drawings-pencils?drawingId=${drawingId}&pencilId=${encodeURIComponent(pencilId)}`, {
+            method: 'DELETE',
+            credentials: 'include'
+        });
+        if (!res.ok) throw new Error('Erreur lors du retrait du crayon');
         return res.json();
     },
 

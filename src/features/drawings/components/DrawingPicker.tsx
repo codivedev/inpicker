@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Plus, Image as ImageIcon, Check } from 'lucide-react';
 import { useDrawings } from '@/features/drawings/hooks/useDrawings';
+import { cloudflareApi } from '@/lib/cloudflare-api';
 
 interface DrawingPickerProps {
     isOpen: boolean;
@@ -127,13 +128,13 @@ export function DrawingPicker({ isOpen, onClose, onSelect, pencilId }: DrawingPi
                                         onClick={() => !alreadyHas && handleSelect(drawing.id)}
                                         disabled={alreadyHas}
                                         className={`w-full flex items-center gap-3 p-3 rounded-xl text-left transition-colors ${alreadyHas
-                                                ? 'bg-green-500/10 border border-green-500/20 cursor-not-allowed'
-                                                : 'bg-secondary/30 hover:bg-secondary/50 border border-transparent'
+                                            ? 'bg-green-500/10 border border-green-500/20 cursor-not-allowed'
+                                            : 'bg-secondary/30 hover:bg-secondary/50 border border-transparent'
                                             }`}
                                     >
-                                        {drawing.imageBase64 ? (
+                                        {drawing.image_r2_key ? (
                                             <img
-                                                src={drawing.imageBase64}
+                                                src={cloudflareApi.getImageUrl(drawing.image_r2_key)}
                                                 alt={drawing.title}
                                                 className="w-12 h-12 rounded-lg object-cover"
                                             />

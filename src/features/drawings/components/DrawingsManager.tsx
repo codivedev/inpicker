@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Plus, Image as ImageIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useDrawings } from '../hooks/useDrawings';
+import { cloudflareApi } from '@/lib/cloudflare-api';
 import { useState } from 'react';
 
 export function DrawingsManager() {
@@ -50,9 +51,9 @@ export function DrawingsManager() {
                         onClick={() => navigate(`/dessins/${drawing.id}`)}
                         className="aspect-square rounded-xl bg-secondary/30 border border-border overflow-hidden relative group cursor-pointer"
                     >
-                        {drawing.imageBase64 ? (
+                        {drawing.image_r2_key ? (
                             <img
-                                src={drawing.imageBase64}
+                                src={cloudflareApi.getImageUrl(drawing.image_r2_key)}
                                 alt={drawing.title}
                                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                             />
