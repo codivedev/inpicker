@@ -284,8 +284,11 @@ export function DrawingDetail() {
             <PencilPicker
                 isOpen={showPencilPicker}
                 onClose={() => setShowPencilPicker(false)}
-                onSelect={(pencilId) => {
-                    addPencilToDrawing(drawingId, pencilId);
+                onSelect={(pencilIds) => {
+                    // Ajouter tous les crayons sélectionnés au dessin
+                    pencilIds.forEach(pencilId => {
+                        addPencilToDrawing(drawingId, pencilId);
+                    });
                     setShowPencilPicker(false);
                 }}
                 excludedPencilIds={drawing.pencilIds}

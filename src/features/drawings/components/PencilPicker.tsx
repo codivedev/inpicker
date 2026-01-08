@@ -1,19 +1,20 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Search, Check } from 'lucide-react';
+import { X, Search, Check, CheckCircle } from 'lucide-react';
 import pencilsData from '@/data/pencils.json';
 import { useInventory } from '@/features/inventory/hooks/useInventory';
 
 interface PencilPickerProps {
     isOpen: boolean;
     onClose: () => void;
-    onSelect: (pencilId: string) => void;
+    onSelect: (pencilIds: string[]) => void; // Modifié pour supporter un tableau
     excludedPencilIds?: string[];
 }
 
 export function PencilPicker({ isOpen, onClose, onSelect, excludedPencilIds = [] }: PencilPickerProps) {
     const [search, setSearch] = useState('');
     const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
+    const [selectedPencils, setSelectedPencils] = useState<string[]>([]); // Nouvelle liste de sélection
     const { isOwned } = useInventory();
 
     // Récupérer les marques uniques
@@ -47,9 +48,32 @@ export function PencilPicker({ isOpen, onClose, onSelect, excludedPencilIds = []
         });
     }, [search, selectedBrand, excludedPencilIds]);
 
-    const handleSelect = (pencil: typeof pencilsData[0]) => {
+    const handleTogglePencil = (pencil: typeof pencilsData[0]) => {
         const pencilId = `${pencil.brand}-${pencil.id}`;
-        onSelect(pencilId);
+        setSelectedPencils(prev =>
+            prev.includes(pencilId)
+                ? prev.filter(id => id !== pencilId)
+                : [...prev, pencilId]
+        );
+    };
+
+    const handleConfirm = () => {
+        if (selectedPencils.length > 0) {
+            onSelect(selectedPencils);
+        }
+        // Reset et fermer
+        setSelectedPencils([]);
+        setSearch('');
+        setSelectedBrand(null);
+        onClose();
+    };
+
+    const handleClose = () => {
+        // Reset et fermer
+        setSelectedPencils([]);
+        setSearch('');
+        setSelectedBrand(null);
+        onClose();
     };
 
     return (
@@ -60,7 +84,7 @@ export function PencilPicker({ isOpen, onClose, onSelect, excludedPencilIds = []
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        onClick={onClose}
+                        onClick={handleClose}
                         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
                     />
                     <motion.div
@@ -72,9 +96,9 @@ export function PencilPicker({ isOpen, onClose, onSelect, excludedPencilIds = []
                     >
                         {/* Header */}
                         <div className="p-4 border-b flex items-center justify-between shrink-0">
-                            <h3 className="text-xl font-bold">Ajouter un crayon</h3>
+                            <h3 className="text-xl font-bold">Ajouter des crayons</h3>
                             <button
-                                onClick={onClose}
+                                onClick={handleClose}
                                 className="p-2 hover:bg-secondary rounded-full transition-colors"
                             >
                                 <X size={20} />
@@ -124,23 +148,34 @@ export function PencilPicker({ isOpen, onClose, onSelect, excludedPencilIds = []
                                 </div>
                             ) : (
                                 filteredPencils.slice(0, 50).map(pencil => {
+                                    const pencilId = `${pencil.brand}-${pencil.id}`;
                                     const owned = isOwned(pencil as any);
+                                    const isSelected = selectedPencils.includes(pencilId);
                                     return (
                                         <button
-                                            key={`${pencil.brand}-${pencil.id}`}
-                                            onClick={() => handleSelect(pencil)}
-                                            className="w-full flex items-center gap-3 p-3 rounded-xl text-left bg-secondary/30 hover:bg-secondary/50 border border-transparent hover:border-primary/20 transition-colors"
+                                            key={pencilId}
+                                            onClick={() => handleTogglePencil(pencil)}
+                                            className={`w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all ${isSelected
+                                                    ? 'bg-primary/20 border-2 border-primary'
+                                                    : 'bg-secondary/30 hover:bg-secondary/50 border border-transparent hover:border-primary/20'
+                                                }`}
                                         >
                                             <div
-                                                className="w-10 h-10 rounded-lg border shadow-sm shrink-0"
+                                                className="w-10 h-10 rounded-lg border shadow-sm shrink-0 relative"
                                                 style={{ backgroundColor: pencil.hex }}
-                                            />
+                                            >
+                                                {isSelected && (
+                                                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+                                                        <Check size={12} className="text-primary-foreground" />
+                                                    </div>
+                                                )}
+                                            </div>
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-center gap-2">
                                                     <h4 className="font-medium truncate">{pencil.name}</h4>
                                                     {owned && (
                                                         <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-green-500/10 text-green-500 font-medium flex items-center gap-0.5">
-                                                            <Check size={10} /> Possédé
+                                                            <CheckCircle size={10} /> Possédé
                                                         </span>
                                                     )}
                                                 </div>
@@ -158,6 +193,22 @@ export function PencilPicker({ isOpen, onClose, onSelect, excludedPencilIds = []
                                     + {filteredPencils.length - 50} autres crayons (affinez votre recherche)
                                 </p>
                             )}
+                        </div>
+
+                        {/* Footer avec bouton de confirmation */}
+                        <div className="p-4 border-t shrink-0 bg-background/95 backdrop-blur-sm">
+                            <button
+                                onClick={handleConfirm}
+                                disabled={selectedPencils.length === 0}
+                                className={`w-full py-4 rounded-xl font-bold text-lg transition-all ${selectedPencils.length > 0
+                                        ? 'bg-primary text-primary-foreground shadow-lg active:scale-[0.98]'
+                                        : 'bg-secondary text-muted-foreground cursor-not-allowed'
+                                    }`}
+                            >
+                                {selectedPencils.length === 0
+                                    ? 'Sélectionnez des crayons'
+                                    : `Ajouter ${selectedPencils.length} crayon${selectedPencils.length > 1 ? 's' : ''}`}
+                            </button>
                         </div>
                     </motion.div>
                 </div>
