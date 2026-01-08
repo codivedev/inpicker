@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { cloudflareApi } from '@/lib/cloudflare-api';
 import pencilsData from '@/data/pencils.json';
-import type { Pencil } from '@/types/pencil';
+import type { Pencil, PencilBrand } from '@/types/pencil';
 
 interface InventoryItem {
     id: string;
@@ -122,7 +122,7 @@ export function useInventory() {
         return {
             id: cp.number,
             name: cp.name,
-            brand: cp.brand,
+            brand: cp.brand as PencilBrand,
             hex: cp.hex,
             rgb: { r, g, b }
         };
