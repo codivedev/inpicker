@@ -10,7 +10,6 @@ import {
     Wand2,
     ChevronRight,
     Palette,
-    Brush,
     Crown
 } from 'lucide-react';
 import { useTheme } from '@/components/theme-provider';
@@ -50,10 +49,12 @@ export function Dashboard({ isAdmin = false }: DashboardProps) {
         <div className="min-h-screen bg-background text-foreground pb-24 overflow-x-hidden">
             <header className="px-6 py-6 flex justify-between items-center bg-background/80 backdrop-blur-lg sticky top-0 z-50 border-b border-border/50">
                 <div onClick={() => navigate('/tableau-de-bord')} className="flex items-center gap-2 cursor-pointer group">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-indigo-600 flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform">
-                        <Brush size={20} className="fill-white/20" />
-                    </div>
-                    <span className="font-bold text-xl tracking-tight">Inpicker</span>
+                    <img
+                        src="/logo.png"
+                        alt="Inpicker"
+                        className="w-10 h-10 rounded-xl shadow-lg group-hover:scale-110 transition-transform"
+                    />
+                    <span className="font-bold text-xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-indigo-300">Inpicker</span>
                 </div>
 
                 <div className="flex items-center gap-3">
