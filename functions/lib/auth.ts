@@ -32,7 +32,10 @@ export async function getUserFromContext(context: CloudflareContext): Promise<st
     }
 
     const cookies = Object.fromEntries(
-        cookieHeader.split('; ').map((c: string) => c.split('='))
+        cookieHeader.split(';').map((c: string) => {
+            const [key, ...value] = c.split('=');
+            return [key.trim(), value.join('=').trim()];
+        })
     );
 
     const token = cookies.auth_token;
