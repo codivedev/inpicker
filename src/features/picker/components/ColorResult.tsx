@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { getPencilId, hexToRgb } from '@/lib/color-utils';
 import type { MatchResult } from '@/lib/color-utils';
 import { useInventory } from '@/features/inventory/hooks/useInventory';
-import { Check, AlertTriangle, X, Info, Bookmark, Plus, ChevronDown, ChevronRight, ChevronUp } from 'lucide-react';
+import { Check, AlertTriangle, X, Info, Bookmark, Plus, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DrawingPicker } from '@/features/drawings/components/DrawingPicker';
 import { useDrawings } from '@/features/drawings/hooks/useDrawings';
