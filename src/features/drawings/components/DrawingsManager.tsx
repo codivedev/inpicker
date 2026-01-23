@@ -1,15 +1,22 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Plus, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, Plus, Image as ImageIcon, X, ExternalLink } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useDrawings } from '../hooks/useDrawings';
 import { cloudflareApi } from '@/lib/cloudflare-api';
 import { useState } from 'react';
+
+interface SelectedDrawing {
+    id: number;
+    title: string;
+    imageUrl: string;
+}
 
 export function DrawingsManager() {
     const navigate = useNavigate();
     const { drawings, createDrawing } = useDrawings();
     const [isCreating, setIsCreating] = useState(false);
     const [newTitle, setNewTitle] = useState('');
+    const [selectedDrawing, setSelectedDrawing] = useState<SelectedDrawing | null>(null);
 
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -18,6 +25,19 @@ export function DrawingsManager() {
         await createDrawing(newTitle);
         setNewTitle('');
         setIsCreating(false);
+    };
+
+    const handleThumbnailClick = (drawing: typeof drawings[0]) => {
+        if (drawing.image_r2_key) {
+            setSelectedDrawing({
+                id: drawing.id,
+                title: drawing.title,
+                imageUrl: cloudflareApi.getImageUrl(drawing.image_r2_key)
+            });
+        } else {
+            // Pas d'image, naviguer directement vers les détails
+            navigate(`/dessins/${drawing.id}`);
+        }
     };
 
     return (
@@ -48,7 +68,7 @@ export function DrawingsManager() {
                     <motion.div
                         key={drawing.id}
                         layoutId={`drawing-${drawing.id}`}
-                        onClick={() => navigate(`/dessins/${drawing.id}`)}
+                        onClick={() => handleThumbnailClick(drawing)}
                         className="aspect-square rounded-xl bg-secondary/30 border border-border overflow-hidden relative group cursor-pointer"
                     >
                         {drawing.image_r2_key ? (
@@ -127,6 +147,62 @@ export function DrawingsManager() {
                     </div>
                 )}
             </AnimatePresence>
+
+            {/* Modal Visualisation Image */}
+            <AnimatePresence>
+                {selectedDrawing && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center">
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setSelectedDrawing(null)}
+                            className="absolute inset-0 bg-black/90 backdrop-blur-md"
+                        />
+
+                        {/* Boutons en haut */}
+                        <div className="absolute top-4 left-4 right-4 z-20 flex justify-between items-center">
+                            <button
+                                onClick={() => setSelectedDrawing(null)}
+                                className="p-3 bg-white/10 backdrop-blur-md rounded-full text-white hover:bg-white/20 transition-colors"
+                            >
+                                <X size={24} />
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setSelectedDrawing(null);
+                                    navigate(`/dessins/${selectedDrawing.id}`);
+                                }}
+                                className="px-4 py-2 bg-primary text-primary-foreground rounded-full font-medium flex items-center gap-2 hover:bg-primary/90 transition-colors"
+                            >
+                                <ExternalLink size={18} />
+                                Détails
+                            </button>
+                        </div>
+
+                        {/* Image en qualité réelle */}
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            className="relative z-10 max-w-[90vw] max-h-[80vh] overflow-hidden"
+                            onClick={e => e.stopPropagation()}
+                        >
+                            <img
+                                src={selectedDrawing.imageUrl}
+                                alt={selectedDrawing.title}
+                                className="max-w-full max-h-[80vh] object-contain rounded-2xl shadow-2xl"
+                            />
+                        </motion.div>
+
+                        {/* Titre en bas */}
+                        <div className="absolute bottom-6 left-0 right-0 text-center z-20">
+                            <h3 className="text-white text-xl font-bold drop-shadow-lg">{selectedDrawing.title}</h3>
+                        </div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }
+
