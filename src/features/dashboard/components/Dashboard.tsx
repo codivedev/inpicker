@@ -105,11 +105,17 @@ export function Dashboard({ isAdmin = false }: DashboardProps) {
                     transition={{ delay: 0.2 }}
                     className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide"
                 >
-                    <div className="min-w-[140px] p-4 rounded-2xl bg-card border shadow-sm flex flex-col gap-1">
+                    <div
+                        onClick={() => navigate('/mes-dessins')}
+                        className="min-w-[140px] p-4 rounded-2xl bg-card border shadow-sm flex flex-col gap-1 cursor-pointer hover:border-primary/50 hover:bg-card/80 transition-all active:scale-95"
+                    >
                         <span className="text-2xl font-bold">{drawings?.length || 0}</span>
                         <span className="text-sm text-muted-foreground font-medium">Dessins</span>
                     </div>
-                    <div className="min-w-[140px] p-4 rounded-2xl bg-card border shadow-sm flex flex-col gap-1">
+                    <div
+                        onClick={() => navigate('/ma-collection')}
+                        className="min-w-[140px] p-4 rounded-2xl bg-card border shadow-sm flex flex-col gap-1 cursor-pointer hover:border-primary/50 hover:bg-card/80 transition-all active:scale-95"
+                    >
                         <span className="text-2xl font-bold">{ownedCount || 0}</span>
                         <span className="text-sm text-muted-foreground font-medium">Crayons</span>
                     </div>
