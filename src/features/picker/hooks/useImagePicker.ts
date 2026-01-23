@@ -30,8 +30,13 @@ export function useImagePicker(options: UseImagePickerOptions = {}) {
 
     // Mettre à jour l'image si initialImage change
     useEffect(() => {
-        if (options.initialImage && !imageSrc) {
+        if (options.initialImage && options.initialImage !== imageSrc) {
             setImageSrc(options.initialImage);
+            setTransform({ x: 0, y: 0, scale: 1 });
+            setPickedColor(null);
+            setMatchResult(null);
+            setAlternatives([]);
+            setLoupePos(null);
         }
     }, [options.initialImage]);
 
