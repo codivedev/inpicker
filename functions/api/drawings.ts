@@ -104,7 +104,8 @@ export async function onRequestPost(context: CloudflareContext) {
 
         let imageKey = null;
         if (file && file instanceof File) {
-            imageKey = `${userId}/${crypto.randomUUID()}-${file.name}`;
+            // Utiliser _ au lieu de / pour éviter les problèmes de routing avec [key].ts
+            imageKey = `${userId}_${crypto.randomUUID()}-${file.name}`;
             await env.IMAGES.put(imageKey, file.stream(), {
                 httpMetadata: { contentType: file.type }
             });
@@ -169,7 +170,7 @@ export async function onRequestPut(context: CloudflareContext) {
             if (existing.image_r2_key) {
                 await env.IMAGES.delete(existing.image_r2_key);
             }
-            imageKey = `${userId}/${crypto.randomUUID()}-${file.name}`;
+            imageKey = `${userId}_${crypto.randomUUID()}-${file.name}`;
             await env.IMAGES.put(imageKey, file.stream(), {
                 httpMetadata: { contentType: file.type }
             });
