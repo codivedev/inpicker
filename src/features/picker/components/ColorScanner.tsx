@@ -206,13 +206,24 @@ export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
                     <X size={24} />
                 </button>
                 <div className="text-sm font-bold uppercase tracking-widest text-white/70">Scanner</div>
-                <button
-                    onClick={() => setShowHistory(true)}
-                    className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
-                    title="Mes Dessins"
-                >
-                    <History size={24} />
-                </button>
+                <div className="flex items-center gap-2">
+                    {imageFile && !activeDrawingId && (
+                        <button
+                            onClick={() => setShowSaveForm(true)}
+                            className="p-2 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
+                            title="Enregistrer"
+                        >
+                            <Save size={20} />
+                        </button>
+                    )}
+                    <button
+                        onClick={() => setShowHistory(true)}
+                        className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+                        title="Mes Dessins"
+                    >
+                        <History size={24} />
+                    </button>
+                </div>
             </div>
 
             {/* Main Area */}
@@ -266,19 +277,6 @@ export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
                             crossOrigin="anonymous" // Important pour les images R2
                             onClick={handleTouch}
                         />
-
-                        {/* Bouton Save floating si pas encore de dessin actif */}
-                        {imageFile && !activeDrawingId && (
-                            <div className="absolute top-20 right-4 z-20">
-                                <button
-                                    onClick={() => setShowSaveForm(true)}
-                                    className="p-3 bg-primary text-primary-foreground rounded-full shadow-2xl active:scale-90 transition-all border border-white/20"
-                                    title="Enregistrer ce dessin"
-                                >
-                                    <Save size={24} />
-                                </button>
-                            </div>
-                        )}
 
                         {/* Canvas caché pour lecture */}
                         <canvas ref={canvasRef} className="hidden" />
