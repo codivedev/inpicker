@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { ArrowRight, Palette, Scan, Layers, Brush } from 'lucide-react';
+import { ArrowRight, Palette, Scan, Layers } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export function LandingPage() {
@@ -16,9 +16,11 @@ export function LandingPage() {
             {/* Nav */}
             <nav className="relative z-10 flex items-center justify-between p-6 max-w-7xl mx-auto w-full">
                 <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white">
-                        <Brush size={18} />
-                    </div>
+                    <img
+                        src="/logo.png"
+                        alt="Inpicker"
+                        className="w-10 h-10 rounded-xl shadow-lg"
+                    />
                     <div className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-indigo-300">
                         Inpicker
                     </div>

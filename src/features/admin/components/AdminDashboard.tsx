@@ -10,7 +10,6 @@ import {
     Plus,
     Pencil,
     Trash2,
-    Crown,
     Activity,
     X,
     Check,
@@ -167,9 +166,11 @@ export function AdminDashboard() {
                     <ArrowLeft size={24} />
                 </button>
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white shadow-lg">
-                        <Crown size={20} />
-                    </div>
+                    <img
+                        src="/logo.png"
+                        alt="Inpicker"
+                        className="w-10 h-10 rounded-xl shadow-lg"
+                    />
                     <div>
                         <h1 className="text-xl font-bold">Administration</h1>
                         <p className="text-xs text-muted-foreground">Panel de gestion Inpicker</p>
