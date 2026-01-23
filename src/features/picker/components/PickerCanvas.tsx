@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useDrawings } from '@/features/drawings/hooks/useDrawings';
 import { cloudflareApi } from '@/lib/cloudflare-api';
 import { cn } from '@/lib/utils';
-import { DrawingPicker } from '@/features/drawings/components/DrawingPicker';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useImagePicker } from '../hooks/useImagePicker';
 import { ColorResult } from './ColorResult';
@@ -49,15 +48,6 @@ export function PickerCanvas() {
     // D'après ma lecture précédente de useImagePicker.ts, il ne le retourne PAS.
     // Je ne modifie pas useImagePicker pour l'instant pour éviter de trop toucher.
     // Je vais plutôt gérer un file localement lors de l'upload. dans handleImageUpload local wrapper.
-
-    // Wrapper pour capturer le fichier lors de l'upload
-    const onFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            // On laisse le hook gérer l'affichage et la logique
-            handleImageUpload(e);
-        }
-    };
 
     // MAUVAISE PISTE : Je ne peux pas capturer le file *après* coup si je passe l'event direct.
     // Je dois modifier le hook useImagePicker pour qu'il expose le file, OU réimplémenter l'upload ici.
