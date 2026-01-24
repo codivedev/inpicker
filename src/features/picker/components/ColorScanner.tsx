@@ -84,7 +84,7 @@ export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
         }
     };
 
-    const handleImageLoad = () => {
+const handleImageLoad = () => {
         if (imageRef.current && canvasRef.current) {
             const canvas = canvasRef.current;
             const img = imageRef.current;
@@ -93,8 +93,12 @@ export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
             const ctx = canvas.getContext('2d');
             ctx?.drawImage(img, 0, 0);
             
+            console.log('Image loaded, canvas size:', { width: canvas.width, height: canvas.height }); // Debug
+            
             // Vérifier si l'image a besoin d'un recentrage automatique
-            detectDrawingBounds();
+            setTimeout(() => {
+                detectDrawingBounds();
+            }, 100); // Petit délai pour s'assurer que tout est chargé
         }
     };
 
@@ -113,6 +117,7 @@ export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
 
         let minX = canvas.width, minY = canvas.height, maxX = 0, maxY = 0;
         let hasContent = false;
+        let contentPixels = 0;
 
         // Analyser les pixels pour trouver les contours
         for (let y = 0; y < canvas.height; y++) {
@@ -123,9 +128,10 @@ export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
                 const b = data[idx + 2];
                 const a = data[idx + 3];
 
-                // Détecter les pixels non-blancs avec un certain seuil
-                if (a > 0 && (r < 240 || g < 240 || b < 240)) {
+                // Détecter les pixels non-blancs avec un seuil plus permissif
+                if (a > 0 && (r < 250 || g < 250 || b < 250)) {
                     hasContent = true;
+                    contentPixels++;
                     minX = Math.min(minX, x);
                     minY = Math.min(minY, y);
                     maxX = Math.max(maxX, x);
@@ -134,20 +140,34 @@ export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
             }
         }
 
-        console.log('Detection result:', { hasContent, minX, minY, maxX, maxY }); // Debug
+        const totalPixels = canvas.width * canvas.height;
+        const contentRatio = contentPixels / totalPixels;
+        
+        console.log('Detection result:', { 
+            hasContent, 
+            contentPixels, 
+            totalPixels, 
+            contentRatio: (contentRatio * 100).toFixed(2) + '%',
+            bounds: { minX, minY, maxX, maxY },
+            canvasSize: { width: canvas.width, height: canvas.height }
+        }); // Debug
 
-        // Si on a détecté un dessin qui n'occupe pas tout l'espace
-        if (hasContent) {
-            const padding = 20; // Marge de sécurité
+        // Si on a détecté un dessin et qu'il occupe moins de 70% de l'image
+        if (hasContent && contentRatio < 0.7) {
+            const padding = Math.max(20, Math.min(canvas.width, canvas.height) * 0.02);
             const cropWidth = maxX - minX + padding * 2;
             const cropHeight = maxY - minY + padding * 2;
             
             // Si la zone détectée est significativement plus petite que l'image
-            if (cropWidth < canvas.width * 0.8 || cropHeight < canvas.height * 0.8) {
-                console.log('Showing auto center button'); // Debug
+            if (cropWidth < canvas.width * 0.9 || cropHeight < canvas.height * 0.9) {
+                console.log('Showing auto center button - content too small'); // Debug
                 setShowAutoCenterButton(true);
+                return; // Sortir pour éviter de masquer le bouton
             }
         }
+        
+        // Masquer le bouton si le dessin occupe assez d'espace
+        setShowAutoCenterButton(false);
     };
 
     // Recentre automatiquement sur le dessin détecté
@@ -264,11 +284,13 @@ export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
     const [lastTouchDistance, setLastTouchDistance] = useState<number | null>(null);
 
     const handleTouchStartForZoom = (e: React.TouchEvent) => {
+        console.log('Touch start for zoom, touches:', e.touches.length); // Debug
         if (e.touches.length === 2) {
             const dx = e.touches[0].clientX - e.touches[1].clientX;
             const dy = e.touches[0].clientY - e.touches[1].clientY;
             const distance = Math.sqrt(dx * dx + dy * dy);
             setLastTouchDistance(distance);
+            console.log('Initial touch distance:', distance); // Debug
         }
     };
 
@@ -283,12 +305,15 @@ export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
             const scale = distance / lastTouchDistance;
             const newZoom = Math.min(Math.max(0.5, zoomLevel * scale), 5);
             
+            console.log('Touch zoom - distance:', distance, 'scale:', scale, 'newZoom:', newZoom); // Debug
+            
             setZoomLevel(newZoom);
             setLastTouchDistance(distance);
         }
     };
 
     const handleTouchEndForZoom = () => {
+        console.log('Touch ended'); // Debug
         setLastTouchDistance(null);
     };
 
@@ -487,6 +512,9 @@ export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
                         onMouseMove={handleMouseMove}
                         onMouseUp={handleMouseUp}
                         onMouseLeave={handleMouseUp}
+                        onTouchStart={handleTouchStartForZoom}
+                        onTouchMove={handleTouchMoveForZoom}
+                        onTouchEnd={handleTouchEndForZoom}
                     >
                         <img
                             ref={imageRef}
@@ -501,9 +529,6 @@ export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
                             crossOrigin="anonymous" // Important pour les images R2
                             onClick={handleTouch}
                             onMouseDown={handleMouseDown}
-                            onTouchStart={handleTouchStartForZoom}
-                            onTouchMove={handleTouchMoveForZoom}
-                            onTouchEnd={handleTouchEndForZoom}
                         />
 
                         {/* Canvas caché pour lecture */}
@@ -524,6 +549,14 @@ export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
                                 Recentrer le dessin
                             </button>
                         )}
+
+                        {/* Bouton de détection manuelle pour debug */}
+                        <button
+                            onClick={() => detectDrawingBounds()}
+                            className="absolute top-4 right-4 bg-blue-500/20 backdrop-blur-md text-white px-3 py-2 rounded-lg hover:bg-blue-500/30 transition-all text-xs border border-blue-500/30"
+                        >
+                            🎯 Détecter
+                        </button>
 
                         {/* Indicateurs de zoom */}
                         {zoomLevel !== 1 && (
