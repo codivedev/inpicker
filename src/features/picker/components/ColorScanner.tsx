@@ -1,9 +1,11 @@
 import { useState, useRef } from 'react';
-import { Camera, Check, X, Save, History, Loader2, Image as ImageIcon, Droplets } from 'lucide-react';
+import { Camera, Check, X, Save, History, Loader2, Image as ImageIcon } from 'lucide-react';
 import { useDrawings } from '@/features/drawings/hooks/useDrawings';
 import { cloudflareApi } from '@/lib/cloudflare-api';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useGesture } from '@use-gesture/react';
+import { Pipette, RotateCcw, Crosshair, Plus } from 'lucide-react';
 
 
 interface ColorScannerProps {
@@ -13,7 +15,7 @@ interface ColorScannerProps {
 
 export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
     console.log('ColorScanner component rendered'); // Debug
-    
+
     const { drawings, createDrawing, loading: drawingsLoading } = useDrawings();
     const [imageSrc, setImageSrc] = useState<string | null>(null);
     const [imageFile, setImageFile] = useState<File | null>(null);
@@ -26,11 +28,10 @@ export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
     const [showHistory, setShowHistory] = useState(false);
     const [activeDrawingId, setActiveDrawingId] = useState<number | null>(null);
 
-    // États pour le zoom
-    const [zoomLevel, setZoomLevel] = useState(1);
+    // États pour le zoom et pan (Standardisé)
+    const [scale, setScale] = useState(1);
     const [position, setPosition] = useState({ x: 0, y: 0 });
-    const [isDragging, setIsDragging] = useState(false);
-    const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+    const [loupe, setLoupe] = useState<{ x: number, y: number, color: string } | null>(null);
 
     // États pour la détection automatique
     const [isAutoCentering, setIsAutoCentering] = useState(false);
@@ -87,7 +88,7 @@ export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
         }
     };
 
-const handleImageLoad = () => {
+    const handleImageLoad = () => {
         if (imageRef.current && canvasRef.current) {
             const canvas = canvasRef.current;
             const img = imageRef.current;
@@ -95,9 +96,9 @@ const handleImageLoad = () => {
             canvas.height = img.naturalHeight;
             const ctx = canvas.getContext('2d');
             ctx?.drawImage(img, 0, 0);
-            
+
             console.log('Image loaded, canvas size:', { width: canvas.width, height: canvas.height }); // Debug
-            
+
             // Vérifier si l'image a besoin d'un recentrage automatique
             setTimeout(() => {
                 detectDrawingBounds();
@@ -145,11 +146,11 @@ const handleImageLoad = () => {
 
         const totalPixels = canvas.width * canvas.height;
         const contentRatio = contentPixels / totalPixels;
-        
-        console.log('Detection result:', { 
-            hasContent, 
-            contentPixels, 
-            totalPixels, 
+
+        console.log('Detection result:', {
+            hasContent,
+            contentPixels,
+            totalPixels,
             contentRatio: (contentRatio * 100).toFixed(2) + '%',
             bounds: { minX, minY, maxX, maxY },
             canvasSize: { width: canvas.width, height: canvas.height }
@@ -160,7 +161,7 @@ const handleImageLoad = () => {
             const padding = Math.max(20, Math.min(canvas.width, canvas.height) * 0.02);
             const cropWidth = maxX - minX + padding * 2;
             const cropHeight = maxY - minY + padding * 2;
-            
+
             // Si la zone détectée est significativement plus petite que l'image
             if (cropWidth < canvas.width * 0.9 || cropHeight < canvas.height * 0.9) {
                 console.log('Showing auto center button - content too small'); // Debug
@@ -168,7 +169,7 @@ const handleImageLoad = () => {
                 return; // Sortir pour éviter de masquer le bouton
             }
         }
-        
+
         // Masquer le bouton si le dessin occupe assez d'espace
         setShowAutoCenterButton(false);
     };
@@ -178,7 +179,7 @@ const handleImageLoad = () => {
         if (!canvasRef.current || !imageRef.current) return;
 
         setIsAutoCentering(true);
-        
+
         try {
             const canvas = canvasRef.current;
             const ctx = canvas.getContext('2d');
@@ -221,21 +222,21 @@ const handleImageLoad = () => {
                 tempCanvas.width = cropWidth;
                 tempCanvas.height = cropHeight;
                 const tempCtx = tempCanvas.getContext('2d');
-                
+
                 if (tempCtx) {
                     tempCtx.drawImage(canvas, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
-                    
+
                     // Redimensionner le canvas principal
                     canvas.width = cropWidth;
                     canvas.height = cropHeight;
                     ctx.drawImage(tempCanvas, 0, 0);
-                    
+
                     // Mettre à jour l'image affichée
                     const croppedImageUrl = canvas.toDataURL();
                     setImageSrc(croppedImageUrl);
-                    
+
                     // Réinitialiser le zoom et la position
-                    setZoomLevel(1);
+                    setScale(1);
                     setPosition({ x: 0, y: 0 });
                     setShowAutoCenterButton(false);
                 }
@@ -247,140 +248,102 @@ const handleImageLoad = () => {
         }
     };
 
-    // Gestion du zoom avec la molette
-    const handleWheel = (e: React.WheelEvent) => {
-        e.preventDefault();
-        
-        // Ajuster le zoom simplement
-        const delta = e.deltaY > 0 ? 0.9 : 1.1;
-        const newZoom = Math.min(Math.max(0.5, zoomLevel * delta), 5);
-        setZoomLevel(newZoom);
-        
-        console.log('Zoom level:', newZoom); // Debug
-    };
+    // --- LOGIQUE LOUPE & GESTURES (Portée de ZoomableImage) ---
 
-    // Gestion du drag pour déplacer l'image zoomée
-    const handleMouseDown = (e: React.MouseEvent) => {
-        if (zoomLevel > 1) {
-            setIsDragging(true);
-            setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
-            console.log('Drag started'); // Debug
-        }
-    };
+    const getPixelColor = (clientX: number, clientY: number) => {
+        const image = imageRef.current;
+        const canvas = canvasRef.current;
+        if (!image || !canvas) return null;
 
-    const handleMouseMove = (e: React.MouseEvent) => {
-        if (isDragging && zoomLevel > 1) {
-            setPosition({
-                x: e.clientX - dragStart.x,
-                y: e.clientY - dragStart.y
-            });
-            console.log('Dragging position:', { x: e.clientX - dragStart.x, y: e.clientY - dragStart.y }); // Debug
-        }
-    };
+        const rect = image.getBoundingClientRect();
 
-    const handleMouseUp = () => {
-        setIsDragging(false);
-        console.log('Drag ended'); // Debug
-    };
+        // Coordonnées du centre de l'image native
+        const centerX = image.naturalWidth / 2;
+        const centerY = image.naturalHeight / 2;
 
-    // Gestion du pincement sur mobile - version simplifiée
-    const [initialDistance, setInitialDistance] = useState<number | null>(null);
-    const [initialZoom, setInitialZoom] = useState(1);
+        // Position de la souris par rapport au centre de l'élément transformé
+        const domCenterX = rect.left + rect.width / 2;
+        const domCenterY = rect.top + rect.height / 2;
 
-    const handleTouchStart = (e: React.TouchEvent) => {
-        if (e.touches.length === 2) {
-            e.preventDefault();
-            const dx = e.touches[0].clientX - e.touches[1].clientX;
-            const dy = e.touches[0].clientY - e.touches[1].clientY;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            setInitialDistance(distance);
-            setInitialZoom(zoomLevel);
-            console.log('Pinch start - distance:', distance, 'zoom:', zoomLevel);
-        }
-    };
+        const relativeToCenterX = clientX - domCenterX;
+        const relativeToCenterY = clientY - domCenterY;
 
-    const handleTouchMove = (e: React.TouchEvent) => {
-        if (e.touches.length === 2 && initialDistance !== null) {
-            e.preventDefault();
-            const dx = e.touches[0].clientX - e.touches[1].clientX;
-            const dy = e.touches[0].clientY - e.touches[1].clientY;
-            const currentDistance = Math.sqrt(dx * dx + dy * dy);
-            
-            const scale = currentDistance / initialDistance;
-            const newZoom = Math.min(Math.max(0.5, initialZoom * scale), 5);
-            
-            setZoomLevel(newZoom);
-            console.log('Pinch move - scale:', scale.toFixed(2), 'newZoom:', newZoom.toFixed(2));
-        }
-    };
+        // On compense le scale pour revenir aux coords natives
+        const unscaledX = relativeToCenterX / scale;
+        const unscaledY = relativeToCenterY / scale;
 
-    const handleTouchEnd = () => {
-        setInitialDistance(null);
-        console.log('Pinch end');
-    };
+        const pixelX = Math.floor(centerX + unscaledX);
+        const pixelY = Math.floor(centerY + unscaledY);
 
-// Version simplifiée qui combine les deux handlers
-    const handleColorPick = (e: React.MouseEvent | React.TouchEvent) => {
-        if (!isPipetteMode) return; // Uniquement en mode pipette
-        
-        if (!canvasRef.current || !imageRef.current || !containerRef.current || !imageSrc) return;
-
-        // Ignorer si c'est un zoom (2 doigts) ou si on est en train de dragger
-        if ('touches' in e && e.touches.length !== 1) return;
-        if (isDragging) return;
-
-        console.log('Color pick event detected'); // Debug
-
-        const img = imageRef.current;
-        const rect = img.getBoundingClientRect();
-        
-        // Position relative à l'image
-        const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
-        const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
-        
-        const xInImage = clientX - rect.left;
-        const yInImage = clientY - rect.top;
-
-        // Vérifier si le clic est dans la zone de l'image
-        if (xInImage < 0 || xInImage > rect.width || yInImage < 0 || yInImage > rect.height) {
-            console.log('Click outside image bounds'); // Debug
-            return;
-        }
-
-        // Position sur le canvas original (simple scaling)
-        const naturalWidth = img.naturalWidth;
-        const naturalHeight = img.naturalHeight;
-        const sourceX = Math.floor((xInImage / rect.width) * naturalWidth);
-        const sourceY = Math.floor((yInImage / rect.height) * naturalHeight);
-
-        // Validation des limites
-        if (sourceX < 0 || sourceX >= naturalWidth || sourceY < 0 || sourceY >= naturalHeight) {
-            console.log('Click outside canvas bounds'); // Debug
-            return;
-        }
-
-        // Lire la couleur
-        const ctx = canvasRef.current.getContext('2d', { willReadFrequently: true });
-        if (!ctx) return;
-
-        try {
-            const pixelData = ctx.getImageData(sourceX, sourceY, 1, 1).data;
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        if (ctx) {
+            const safeX = Math.max(0, Math.min(pixelX, image.naturalWidth - 1));
+            const safeY = Math.max(0, Math.min(pixelY, image.naturalHeight - 1));
+            const pixelData = ctx.getImageData(safeX, safeY, 1, 1).data;
             const r = pixelData[0];
             const g = pixelData[1];
             const b = pixelData[2];
-
-            const hex = `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase()}`;
-            console.log('Color picked:', hex); // Debug
-            setPickedColor(hex);
-            setIsPipetteMode(false); // Désactiver après sélection
-        } catch (error) {
-            console.error('Error picking color:', error);
+            return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase()}`;
         }
+        return null;
     };
 
-    
+    const bind = useGesture({
+        onDrag: ({ last, event, offset: [ox, oy], touches, pinching, cancel }) => {
+            if (event.cancelable) event.preventDefault();
 
+            // S'assurer qu'on utilise le nombre de doigts réel
+            const realTouches = (event as TouchEvent).touches ? (event as TouchEvent).touches.length : touches;
 
+            // ZOOM/PAN (2 doigts ou pinch ou !pipette)
+            if (realTouches > 1 || pinching || !isPipetteMode) {
+                if (loupe) setLoupe(null);
+                if (isPipetteMode && realTouches > 1) cancel();
+                setPosition({ x: ox, y: oy });
+                return;
+            }
+
+            // LOUPE (1 doigt + Pipette)
+            if (isPipetteMode && realTouches === 1) {
+                // @ts-ignore
+                const clientX = event.changedTouches ? event.changedTouches[0].clientX : event.clientX;
+                // @ts-ignore
+                const clientY = event.changedTouches ? event.changedTouches[0].clientY : event.clientY;
+
+                const color = getPixelColor(clientX, clientY);
+                if (color) {
+                    const rect = containerRef.current?.getBoundingClientRect();
+                    if (rect) {
+                        setLoupe({
+                            x: clientX - rect.left,
+                            y: clientY - rect.top,
+                            color
+                        });
+                    }
+                }
+
+                if (last && loupe) {
+                    setPickedColor(loupe.color);
+                    setIsPipetteMode(false); // Auto-exit pipette mode
+                    setLoupe(null);
+                }
+            }
+        },
+        onPinch: ({ offset: [s], memo }) => {
+            if (loupe) setLoupe(null);
+            setScale(s);
+            return memo;
+        },
+    }, {
+        drag: {
+            from: () => [position.x, position.y],
+            filterTaps: true,
+            delay: 150, // CRITIQUE ANTI-CONFLIT
+        },
+        pinch: {
+            scaleBounds: { min: 0.5, max: 8 },
+        },
+    });
 
     const confirmColor = () => {
         if (pickedColor) {
@@ -457,29 +420,103 @@ const handleImageLoad = () => {
                     <div
                         ref={containerRef}
                         className="relative w-full h-full flex items-center justify-center touch-none overflow-hidden"
-                        onWheel={handleWheel}
-                        onMouseMove={handleMouseMove}
-                        onMouseUp={handleMouseUp}
-                        onMouseLeave={handleMouseUp}
-                        onTouchStart={handleTouchStart}
-                        onTouchMove={handleTouchMove}
-                        onTouchEnd={handleTouchEnd}
+                        {...bind()} // Bind Gestures
                     >
+                        {/* Toolbar - Below Header */}
+                        <div className="absolute top-20 right-4 z-20 flex flex-col gap-2 pointer-events-auto">
+                            <button
+                                onClick={() => setIsPipetteMode(!isPipetteMode)}
+                                className={cn(
+                                    "p-3 rounded-full shadow-lg transition-all duration-200 backdrop-blur-md",
+                                    isPipetteMode
+                                        ? "bg-primary text-primary-foreground ring-2 ring-primary ring-offset-2"
+                                        : "bg-white/10 hover:bg-white/20 text-white border border-white/10"
+                                )}
+                                title={isPipetteMode ? "Désactiver la pipette" : "Activer la pipette"}
+                            >
+                                <Pipette size={20} />
+                            </button>
+
+                            {scale > 1.1 && (
+                                <motion.button
+                                    initial={{ opacity: 0, scale: 0.8 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    exit={{ opacity: 0, scale: 0.8 }}
+                                    onClick={() => {
+                                        setScale(1);
+                                        setPosition({ x: 0, y: 0 });
+                                    }}
+                                    className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-full shadow-lg backdrop-blur-md transition-colors border border-white/10"
+                                    title="Réinitialiser la vue"
+                                >
+                                    <RotateCcw size={20} />
+                                </motion.button>
+                            )}
+                        </div>
+
+                        {/* Scanner Button (Float bottom) only in Pipette Mode */}
+                        <AnimatePresence>
+                            {isPipetteMode && (
+                                <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
+                                    <motion.div
+                                        initial={{ y: 20, opacity: 0 }}
+                                        animate={{ y: 0, opacity: 1 }}
+                                        exit={{ y: 20, opacity: 0 }}
+                                        className="bg-black/50 backdrop-blur-md text-white px-4 py-2 rounded-full border border-white/10 text-sm font-medium shadow-lg"
+                                    >
+                                        Mode Scanner actif
+                                    </motion.div>
+                                </div>
+                            )}
+                        </AnimatePresence>
+
+                        {/* Reticle for centered picking (Optional, but Loupe is better) */}
+                        <div className={cn(
+                            "absolute inset-0 z-10 pointer-events-none flex items-center justify-center transition-opacity duration-200",
+                            isPipetteMode ? "opacity-30" : "opacity-0"
+                        )}>
+                            <Crosshair className="text-white/50" size={32} />
+                        </div>
+                        {/* LOUPE */}
+                        <AnimatePresence>
+                            {loupe && isPipetteMode && (
+                                <motion.div
+                                    initial={{ scale: 0, opacity: 0 }}
+                                    animate={{ scale: 1, opacity: 1 }}
+                                    exit={{ scale: 0, opacity: 0 }}
+                                    style={{
+                                        left: loupe.x,
+                                        top: loupe.y - 80,
+                                    }}
+                                    className="absolute z-50 pointer-events-none -translate-x-1/2 -translate-y-1/2"
+                                >
+                                    <div className="relative">
+                                        <div className="w-24 h-24 rounded-full border-4 border-white shadow-2xl flex items-center justify-center overflow-hidden bg-white">
+                                            <div className="w-full h-full" style={{ backgroundColor: loupe.color }} />
+                                        </div>
+                                        <div className="absolute inset-0 flex items-center justify-center">
+                                            <Plus className="text-black/50 drop-shadow-sm" size={12} strokeWidth={3} />
+                                            <Plus className="absolute text-white/50 drop-shadow-sm" size={12} strokeWidth={2} />
+                                        </div>
+                                        <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-black/80 text-white text-xs font-mono px-2 py-1 rounded-md whitespace-nowrap">
+                                            {loupe.color}
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+
                         <img
                             ref={imageRef}
                             src={imageSrc}
                             alt="Scan target"
-                            className="max-w-full max-h-full object-contain select-none shadow-2xl crosshair-cursor cursor-pointer"
+                            className="max-w-full max-h-full object-contain select-none shadow-2xl pointer-events-none"
                             style={{
-                                transform: `scale(${zoomLevel}) translate(${position.x / zoomLevel}px, ${position.y / zoomLevel}px)`,
-                                transition: isDragging ? 'none' : 'transform 0.2s ease-out',
-                                cursor: isPipetteMode ? 'crosshair' : 'grab'
+                                transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
+                                touchAction: 'none'
                             }}
                             onLoad={handleImageLoad}
-                            crossOrigin="anonymous" // Important pour les images R2
-                            onClick={handleColorPick}
-                            onTouchStart={handleColorPick}
-                            onMouseDown={handleMouseDown}
+                            crossOrigin="anonymous"
                         />
 
                         {/* Canvas caché pour lecture */}
@@ -509,49 +546,9 @@ const handleImageLoad = () => {
                             🎯 Détecter
                         </button>
 
-                        {/* Bouton pipette */}
-                        <button
-                            onClick={() => setIsPipetteMode(!isPipetteMode)}
-                            className={`absolute bottom-24 right-4 px-4 py-3 rounded-xl transition-all flex items-center gap-2 border ${
-                                isPipetteMode 
-                                    ? 'bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20' 
-                                    : 'bg-white/10 backdrop-blur-md text-white hover:bg-white/20 border-white/20'
-                            }`}
-                        >
-                            <Droplets size={18} />
-                            <span className="text-sm font-medium">
-                                {isPipetteMode ? 'Pipette active' : 'Activer pipette'}
-                            </span>
-                        </button>
 
-                        {/* Indicateur visuel du mode pipette */}
-                        {isPipetteMode && (
-                            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
-                                <div className="relative">
-                                    <div className="w-32 h-32 border-2 border-primary rounded-full animate-pulse" />
-                                    <div className="absolute inset-4 border border-primary rounded-full" />
-                                    <div className="absolute inset-8 border border-primary rounded-full" />
-                                    <div className="absolute inset-12 border border-primary rounded-full" />
-                                </div>
-                                <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-primary text-primary-foreground px-3 py-1 rounded-lg text-sm font-medium whitespace-nowrap">
-                                    Cliquez pour pipetter
-                                </div>
-                            </div>
-                        )}
 
-                        {/* Indicateurs de zoom */}
-                        {zoomLevel !== 1 && (
-                            <div className="absolute top-4 right-4 bg-white/10 backdrop-blur-md text-white px-3 py-1 rounded-lg text-sm border border-white/20">
-                                {Math.round(zoomLevel * 100)}%
-                            </div>
-                        )}
 
-                        {/* Instructions de zoom */}
-                        <div className="absolute bottom-20 left-4 bg-white/5 backdrop-blur-sm text-white/60 text-xs px-3 py-2 rounded-lg border border-white/10">
-                            <div>🖱️ Molette pour zoomer</div>
-                            <div>📱 Pincement pour zoomer</div>
-                            <div>✋ Déplacer l'image zoomée</div>
-                        </div>
                     </div>
                 )}
             </div>
