@@ -280,109 +280,149 @@ const handleImageLoad = () => {
         console.log('Drag ended'); // Debug
     };
 
-    // Gestion du pincement sur mobile
-    const [lastTouchDistance, setLastTouchDistance] = useState<number | null>(null);
+    // Gestion du pincement sur mobile - version simplifiée
+    const [initialDistance, setInitialDistance] = useState<number | null>(null);
+    const [initialZoom, setInitialZoom] = useState(1);
 
-    const handleTouchStartForZoom = (e: React.TouchEvent) => {
-        console.log('Touch start for zoom, touches:', e.touches.length); // Debug
+    const handleTouchStart = (e: React.TouchEvent) => {
         if (e.touches.length === 2) {
+            e.preventDefault();
             const dx = e.touches[0].clientX - e.touches[1].clientX;
             const dy = e.touches[0].clientY - e.touches[1].clientY;
             const distance = Math.sqrt(dx * dx + dy * dy);
-            setLastTouchDistance(distance);
-            console.log('Initial touch distance:', distance); // Debug
+            setInitialDistance(distance);
+            setInitialZoom(zoomLevel);
+            console.log('Pinch start - distance:', distance, 'zoom:', zoomLevel);
         }
     };
 
-    const handleTouchMoveForZoom = (e: React.TouchEvent) => {
-        if (e.touches.length === 2 && lastTouchDistance !== null) {
+    const handleTouchMove = (e: React.TouchEvent) => {
+        if (e.touches.length === 2 && initialDistance !== null) {
             e.preventDefault();
-            
             const dx = e.touches[0].clientX - e.touches[1].clientX;
             const dy = e.touches[0].clientY - e.touches[1].clientY;
-            const distance = Math.sqrt(dx * dx + dy * dy);
+            const currentDistance = Math.sqrt(dx * dx + dy * dy);
             
-            const scale = distance / lastTouchDistance;
-            const newZoom = Math.min(Math.max(0.5, zoomLevel * scale), 5);
-            
-            console.log('Touch zoom - distance:', distance, 'scale:', scale, 'newZoom:', newZoom); // Debug
+            const scale = currentDistance / initialDistance;
+            const newZoom = Math.min(Math.max(0.5, initialZoom * scale), 5);
             
             setZoomLevel(newZoom);
-            setLastTouchDistance(distance);
+            console.log('Pinch move - scale:', scale.toFixed(2), 'newZoom:', newZoom.toFixed(2));
         }
     };
 
-    const handleTouchEndForZoom = () => {
-        console.log('Touch ended'); // Debug
-        setLastTouchDistance(null);
+    const handleTouchEnd = () => {
+        setInitialDistance(null);
+        console.log('Pinch end');
     };
 
-    const handleTouch = (e: React.MouseEvent | React.TouchEvent) => {
+    const handleColorPick = (e: React.MouseEvent) => {
         if (!canvasRef.current || !imageRef.current || !containerRef.current || !imageSrc) return;
 
-        // Ignorer si c'est un événement de zoom ou de drag
-        if ('touches' in e && e.touches.length === 2) return;
+        // Ignorer si on est en train de zoomer ou de dragger
         if (isDragging) return;
 
-        console.log('Touch event detected'); // Debug
+        console.log('Color pick event detected'); // Debug
 
         const img = imageRef.current;
-        const rect = containerRef.current.getBoundingClientRect();
         
-        // Position tenant compte du zoom et du déplacement
-        const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
-        const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
-        const actualX = clientX - rect.left;
-        const actualY = clientY - rect.top;
+        // Simpler: use image bounds directly for now
+        const rect = img.getBoundingClientRect();
         
-        // Position relative à l'image zoomée et déplacée
-        const xInZoomedImage = (actualX - position.x) / zoomLevel;
-        const yInZoomedImage = (actualY - position.y) / zoomLevel;
-
-        // Dimensions naturelles de l'image
-        const naturalWidth = img.naturalWidth;
-        const naturalHeight = img.naturalHeight;
-
-        // Dimensions de l'image affichée (sans zoom)
-        const containerAspect = rect.width / rect.height;
-        const imageAspect = naturalWidth / naturalHeight;
-
-        let baseWidth: number, baseHeight: number, baseOffsetX: number, baseOffsetY: number;
-
-        if (imageAspect > containerAspect) {
-            baseWidth = rect.width;
-            baseHeight = rect.width / imageAspect;
-            baseOffsetX = 0;
-            baseOffsetY = (rect.height - baseHeight) / 2;
-        } else {
-            baseHeight = rect.height;
-            baseWidth = rect.height * imageAspect;
-            baseOffsetX = (rect.width - baseWidth) / 2;
-            baseOffsetY = 0;
-        }
+        // Position relative à l'image
+        const clientX = e.clientX;
+        const clientY = e.clientY;
+        
+        const xInImage = clientX - rect.left;
+        const yInImage = clientY - rect.top;
 
         // Vérifier si le clic est dans la zone de l'image
-        if (xInZoomedImage < baseOffsetX || xInZoomedImage > baseOffsetX + baseWidth || 
-            yInZoomedImage < baseOffsetY || yInZoomedImage > baseOffsetY + baseHeight) {
+        if (xInImage < 0 || xInImage > rect.width || yInImage < 0 || yInImage > rect.height) {
             console.log('Click outside image bounds'); // Debug
             return;
         }
 
-        // Position relative à l'image elle-même (sans les offsets)
-        const xInImage = xInZoomedImage - baseOffsetX;
-        const yInImage = yInZoomedImage - baseOffsetY;
-
-        // Ratio pour obtenir la position sur le canvas original
-        const scaleX = naturalWidth / baseWidth;
-        const scaleY = naturalHeight / baseHeight;
-
-        const sourceX = Math.floor(xInImage * scaleX);
-        const sourceY = Math.floor(yInImage * scaleY);
+        // Position sur le canvas original (simple scaling)
+        const naturalWidth = img.naturalWidth;
+        const naturalHeight = img.naturalHeight;
+        const sourceX = Math.floor((xInImage / rect.width) * naturalWidth);
+        const sourceY = Math.floor((yInImage / rect.height) * naturalHeight);
 
         // Validation des limites
         if (sourceX < 0 || sourceX >= naturalWidth || sourceY < 0 || sourceY >= naturalHeight) {
             console.log('Click outside canvas bounds'); // Debug
             return;
+        }
+
+        // Lire la couleur
+        const ctx = canvasRef.current.getContext('2d', { willReadFrequently: true });
+        if (!ctx) return;
+
+        try {
+            const pixelData = ctx.getImageData(sourceX, sourceY, 1, 1).data;
+            const r = pixelData[0];
+            const g = pixelData[1];
+            const b = pixelData[2];
+
+            const hex = `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase()}`;
+            console.log('Color picked:', hex); // Debug
+            setPickedColor(hex);
+        } catch (error) {
+            console.error('Error picking color:', error);
+        }
+    };
+
+    const handleTouchColorPick = (e: React.TouchEvent) => {
+        if (!canvasRef.current || !imageRef.current || !containerRef.current || !imageSrc) return;
+
+        // Ignorer si c'est un zoom (2 doigts)
+        if (e.touches.length !== 1) return;
+        if (isDragging) return;
+
+        console.log('Touch color pick event detected'); // Debug
+
+        const img = imageRef.current;
+        const rect = img.getBoundingClientRect();
+        
+        const clientX = e.touches[0].clientX;
+        const clientY = e.touches[0].clientY;
+        
+        const xInImage = clientX - rect.left;
+        const yInImage = clientY - rect.top;
+
+        // Vérifier si le clic est dans la zone de l'image
+        if (xInImage < 0 || xInImage > rect.width || yInImage < 0 || yInImage > rect.height) {
+            console.log('Touch outside image bounds'); // Debug
+            return;
+        }
+
+        // Position sur le canvas original (simple scaling)
+        const naturalWidth = img.naturalWidth;
+        const naturalHeight = img.naturalHeight;
+        const sourceX = Math.floor((xInImage / rect.width) * naturalWidth);
+        const sourceY = Math.floor((yInImage / rect.height) * naturalHeight);
+
+        // Validation des limites
+        if (sourceX < 0 || sourceX >= naturalWidth || sourceY < 0 || sourceY >= naturalHeight) {
+            console.log('Touch outside canvas bounds'); // Debug
+            return;
+        }
+
+        // Lire la couleur
+        const touchCtx = canvasRef.current.getContext('2d', { willReadFrequently: true });
+        if (!touchCtx) return;
+
+        try {
+            const pixelData = touchCtx.getImageData(sourceX, sourceY, 1, 1).data;
+            const r = pixelData[0];
+            const g = pixelData[1];
+            const b = pixelData[2];
+
+            const hex = `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase()}`;
+            console.log('Touch color picked:', hex); // Debug
+            setPickedColor(hex);
+        } catch (error) {
+            console.error('Error picking touch color:', error);
         }
 
         const ctx = canvasRef.current.getContext('2d', { willReadFrequently: true });
@@ -512,9 +552,9 @@ const handleImageLoad = () => {
                         onMouseMove={handleMouseMove}
                         onMouseUp={handleMouseUp}
                         onMouseLeave={handleMouseUp}
-                        onTouchStart={handleTouchStartForZoom}
-                        onTouchMove={handleTouchMoveForZoom}
-                        onTouchEnd={handleTouchEndForZoom}
+                        onTouchStart={handleTouchStart}
+                        onTouchMove={handleTouchMove}
+                        onTouchEnd={handleTouchEnd}
                     >
                         <img
                             ref={imageRef}
@@ -527,8 +567,9 @@ const handleImageLoad = () => {
                             }}
                             onLoad={handleImageLoad}
                             crossOrigin="anonymous" // Important pour les images R2
-                            onClick={handleTouch}
+                            onClick={handleColorPick}
                             onMouseDown={handleMouseDown}
+                            onTouchStart={handleTouchColorPick}
                         />
 
                         {/* Canvas caché pour lecture */}
