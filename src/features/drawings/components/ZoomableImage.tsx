@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from 'react';
 import { useGesture } from '@use-gesture/react';
-import { motion } from 'framer-motion';
-import { Pipette, RotateCcw, Crosshair } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Pipette, RotateCcw, Crosshair, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ZoomableImageProps {
@@ -50,6 +50,47 @@ export function ZoomableImage({ src, alt, onColorPick, className }: ZoomableImag
         setPosition({ x: 0, y: 0 });
     };
 
+    const [loupe, setLoupe] = useState<{ x: number, y: number, color: string } | null>(null);
+
+    const getPixelColor = (clientX: number, clientY: number) => {
+        const image = imageRef.current;
+        const canvas = canvasRef.current;
+        if (!image || !canvas) return null;
+
+        const rect = image.getBoundingClientRect();
+
+        // Coordonnées relatives au conteneur (pour l'affichage de la loupe)
+        // Mais pour le canvas, il faut compenser les transforms CSS
+
+        const centerX = image.naturalWidth / 2;
+        const centerY = image.naturalHeight / 2;
+
+        // Position de la souris par rapport au centre de l'élément transformé
+        const domCenterX = rect.left + rect.width / 2;
+        const domCenterY = rect.top + rect.height / 2;
+
+        const relativeToCenterX = clientX - domCenterX;
+        const relativeToCenterY = clientY - domCenterY;
+
+        // On compense le scale pour revenir aux coords natives
+        const unscaledX = relativeToCenterX / scale;
+        const unscaledY = relativeToCenterY / scale;
+
+        const pixelX = Math.floor(centerX + unscaledX);
+        const pixelY = Math.floor(centerY + unscaledY);
+
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        if (ctx) {
+            const safeX = Math.max(0, Math.min(pixelX, image.naturalWidth - 1));
+            const safeY = Math.max(0, Math.min(pixelY, image.naturalHeight - 1));
+            const pixelData = ctx.getImageData(safeX, safeY, 1, 1).data;
+            return `#${[pixelData[0], pixelData[1], pixelData[2]]
+                .map(x => x.toString(16).padStart(2, '0'))
+                .join('')}`;
+        }
+        return null;
+    };
+
     const pickColorAtCenter = () => {
         const image = imageRef.current;
         const canvas = canvasRef.current;
@@ -88,22 +129,58 @@ export function ZoomableImage({ src, alt, onColorPick, className }: ZoomableImag
     };
 
     const bind = useGesture({
-        onDrag: ({ offset: [x, y] }) => {
-            // Pan toujours actif, même en mode pipette pour ajuster la visée
-            setPosition({ x, y });
+        onDrag: ({ last, event, offset: [ox, oy], touches }) => {
+            // Empêcher le comportement par défaut (scroll, etc)
+            event.preventDefault();
+
+            // GESTION DU ZOOM/PAN (2 doigts ou mode Vue)
+            if (touches > 1 || !isPipetteMode) {
+                if (loupe) setLoupe(null); // Cacher la loupe si on passe à 2 doigts
+                setPosition({ x: ox, y: oy });
+                return;
+            }
+
+            // GESTION DE LA LOUPE (1 doigt + Mode Pipette)
+            if (isPipetteMode && touches === 1) {
+                // @ts-ignore
+                const clientX = event.changedTouches ? event.changedTouches[0].clientX : event.clientX;
+                // @ts-ignore
+                const clientY = event.changedTouches ? event.changedTouches[0].clientY : event.clientY;
+
+                // Mettre à jour la loupe
+                const color = getPixelColor(clientX, clientY);
+                if (color) {
+                    const rect = containerRef.current?.getBoundingClientRect();
+                    if (rect) {
+                        setLoupe({
+                            x: clientX - rect.left,
+                            y: clientY - rect.top,
+                            color
+                        });
+                    }
+                }
+
+                // Si on relâche, on valide la couleur
+                if (last && loupe && onColorPick) {
+                    onColorPick(loupe.color);
+                    setLoupe(null);
+                }
+            }
         },
         onPinch: ({ offset: [s], memo }) => {
-            // Zoom toujours actif
+            // Le pinch n'active jamais la loupe
+            setLoupe(null);
             setScale(s);
             return memo;
         },
     }, {
         drag: {
             from: () => [position.x, position.y],
+            filterTaps: true,
+            delay: true, // Aide à distinguer click/drag
         },
         pinch: {
             scaleBounds: { min: 1, max: 8 },
-            modifierKey: null,
         },
     });
 
@@ -162,10 +239,62 @@ export function ZoomableImage({ src, alt, onColorPick, className }: ZoomableImag
                 </div>
             </div>
 
+            {/* LOUPE PROCREATE STYLE */}
+            <AnimatePresence>
+                {loupe && isPipetteMode && (
+                    <motion.div
+                        initial={{ scale: 0, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0, opacity: 0 }}
+                        style={{
+                            left: loupe.x,
+                            top: loupe.y - 80, // Décalé vers le haut pour voir sous le doigt
+                        }}
+                        className="absolute z-50 pointer-events-none -translate-x-1/2 -translate-y-1/2"
+                    >
+                        <div className="relative">
+                            {/* Cercle Loupe */}
+                            <div
+                                className="w-24 h-24 rounded-full border-4 border-white shadow-2xl flex items-center justify-center overflow-hidden bg-white"
+                            >
+                                {/* Couleur actuelle (Remplissage) */}
+                                <div
+                                    className="w-full h-full"
+                                    style={{ backgroundColor: loupe.color }}
+                                />
+                            </div>
+
+                            {/* Réticule au centre de la loupe */}
+                            <div className="absolute inset-0 flex items-center justify-center">
+                                <Plus className="text-black/50 drop-shadow-sm" size={12} strokeWidth={3} />
+                                <Plus className="absolute text-white/50 drop-shadow-sm" size={12} strokeWidth={2} />
+                            </div>
+
+                            {/* Code Hex sous la loupe */}
+                            <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-black/80 text-white text-xs font-mono px-2 py-1 rounded-md whitespace-nowrap">
+                                {loupe.color}
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Indicator Toast (Pipette Mode Active) */}
+            {isPipetteMode && !loupe && (
+                <div className="absolute top-4 left-4 z-20 pointer-events-none">
+                    <div className="bg-primary/90 text-primary-foreground px-4 py-2 rounded-full text-xs font-bold shadow-lg backdrop-blur-md">
+                        MODE PIPETTE
+                    </div>
+                </div>
+            )}
+
             {/* Image & Interaction Layer */}
             <div
                 {...bind()}
-                className="w-full h-full flex items-center justify-center cursor-move"
+                className={cn(
+                    "w-full h-full flex items-center justify-center cursor-move",
+                    isPipetteMode ? "cursor-crosshair" : ""
+                )}
                 style={{ minHeight: '300px' }}
             >
                 <div
