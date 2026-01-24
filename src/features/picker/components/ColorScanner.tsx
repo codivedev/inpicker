@@ -12,6 +12,8 @@ interface ColorScannerProps {
 }
 
 export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
+    console.log('ColorScanner component rendered'); // Debug
+    
     const { drawings, createDrawing, loading: drawingsLoading } = useDrawings();
     const [imageSrc, setImageSrc] = useState<string | null>(null);
     const [imageFile, setImageFile] = useState<File | null>(null);
@@ -100,6 +102,8 @@ export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
     const detectDrawingBounds = () => {
         if (!canvasRef.current || !imageRef.current) return;
 
+        console.log('Detecting drawing bounds...'); // Debug
+
         const canvas = canvasRef.current;
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
@@ -130,6 +134,8 @@ export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
             }
         }
 
+        console.log('Detection result:', { hasContent, minX, minY, maxX, maxY }); // Debug
+
         // Si on a détecté un dessin qui n'occupe pas tout l'espace
         if (hasContent) {
             const padding = 20; // Marge de sécurité
@@ -138,6 +144,7 @@ export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
             
             // Si la zone détectée est significativement plus petite que l'image
             if (cropWidth < canvas.width * 0.8 || cropHeight < canvas.height * 0.8) {
+                console.log('Showing auto center button'); // Debug
                 setShowAutoCenterButton(true);
             }
         }
@@ -221,28 +228,12 @@ export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
     const handleWheel = (e: React.WheelEvent) => {
         e.preventDefault();
         
-        if (!containerRef.current || !imageRef.current) return;
-
-        const container = containerRef.current;
-        const rect = container.getBoundingClientRect();
-        
-        // Calculer le point de zoom relatif à l'image
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        
-        // Ajuster le zoom
+        // Ajuster le zoom simplement
         const delta = e.deltaY > 0 ? 0.9 : 1.1;
         const newZoom = Math.min(Math.max(0.5, zoomLevel * delta), 5);
+        setZoomLevel(newZoom);
         
-        if (newZoom !== zoomLevel) {
-            // Calculer la nouvelle position pour garder le point sous la souris
-            const zoomRatio = newZoom / zoomLevel;
-            const newX = x - (x - position.x) * zoomRatio;
-            const newY = y - (y - position.y) * zoomRatio;
-            
-            setZoomLevel(newZoom);
-            setPosition({ x: newX, y: newY });
-        }
+        console.log('Zoom level:', newZoom); // Debug
     };
 
     // Gestion du drag pour déplacer l'image zoomée
@@ -250,6 +241,7 @@ export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
         if (zoomLevel > 1) {
             setIsDragging(true);
             setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
+            console.log('Drag started'); // Debug
         }
     };
 
@@ -259,17 +251,19 @@ export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
                 x: e.clientX - dragStart.x,
                 y: e.clientY - dragStart.y
             });
+            console.log('Dragging position:', { x: e.clientX - dragStart.x, y: e.clientY - dragStart.y }); // Debug
         }
     };
 
     const handleMouseUp = () => {
         setIsDragging(false);
+        console.log('Drag ended'); // Debug
     };
 
     // Gestion du pincement sur mobile
     const [lastTouchDistance, setLastTouchDistance] = useState<number | null>(null);
 
-    const handleTouchStart = (e: React.TouchEvent) => {
+    const handleTouchStartForZoom = (e: React.TouchEvent) => {
         if (e.touches.length === 2) {
             const dx = e.touches[0].clientX - e.touches[1].clientX;
             const dy = e.touches[0].clientY - e.touches[1].clientY;
@@ -278,7 +272,7 @@ export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
         }
     };
 
-    const handleTouchMove = (e: React.TouchEvent) => {
+    const handleTouchMoveForZoom = (e: React.TouchEvent) => {
         if (e.touches.length === 2 && lastTouchDistance !== null) {
             e.preventDefault();
             
@@ -294,7 +288,7 @@ export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
         }
     };
 
-    const handleTouchEnd = () => {
+    const handleTouchEndForZoom = () => {
         setLastTouchDistance(null);
     };
 
@@ -304,6 +298,8 @@ export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
         // Ignorer si c'est un événement de zoom ou de drag
         if ('touches' in e && e.touches.length === 2) return;
         if (isDragging) return;
+
+        console.log('Touch event detected'); // Debug
 
         const img = imageRef.current;
         const rect = containerRef.current.getBoundingClientRect();
@@ -343,6 +339,7 @@ export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
         // Vérifier si le clic est dans la zone de l'image
         if (xInZoomedImage < baseOffsetX || xInZoomedImage > baseOffsetX + baseWidth || 
             yInZoomedImage < baseOffsetY || yInZoomedImage > baseOffsetY + baseHeight) {
+            console.log('Click outside image bounds'); // Debug
             return;
         }
 
@@ -359,6 +356,7 @@ export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
 
         // Validation des limites
         if (sourceX < 0 || sourceX >= naturalWidth || sourceY < 0 || sourceY >= naturalHeight) {
+            console.log('Click outside canvas bounds'); // Debug
             return;
         }
 
@@ -503,9 +501,9 @@ export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
                             crossOrigin="anonymous" // Important pour les images R2
                             onClick={handleTouch}
                             onMouseDown={handleMouseDown}
-                            onTouchStart={handleTouchStart}
-                            onTouchMove={handleTouchMove}
-                            onTouchEnd={handleTouchEnd}
+                            onTouchStart={handleTouchStartForZoom}
+                            onTouchMove={handleTouchMoveForZoom}
+                            onTouchEnd={handleTouchEndForZoom}
                         />
 
                         {/* Canvas caché pour lecture */}
