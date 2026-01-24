@@ -129,19 +129,25 @@ export function ZoomableImage({ src, alt, onColorPick, className }: ZoomableImag
     };
 
     const bind = useGesture({
-        onDrag: ({ last, event, offset: [ox, oy], touches }) => {
+        onDrag: ({ last, event, offset: [ox, oy], touches, pinching, cancel }) => {
             // Empêcher le comportement par défaut (scroll, etc)
-            event.preventDefault();
+            if (event.cancelable) event.preventDefault();
 
-            // GESTION DU ZOOM/PAN (2 doigts ou mode Vue)
-            if (touches > 1 || !isPipetteMode) {
-                if (loupe) setLoupe(null); // Cacher la loupe si on passe à 2 doigts
+            // S'assurer qu'on utilise le nombre de doigts réel du navigateur si dispo
+            // "touches" de useGesture est parfois la valeur au début du geste
+            const realTouches = (event as TouchEvent).touches ? (event as TouchEvent).touches.length : touches;
+
+            // GESTION DU ZOOM/PAN (2 doigts, ou pinching actif, ou mode Vue)
+            if (realTouches > 1 || pinching || !isPipetteMode) {
+                if (loupe) setLoupe(null); // Cacher la loupe immédiatement
+                if (isPipetteMode && realTouches > 1) cancel(); // Annuler le drag si on passe à 2 doigts
+
                 setPosition({ x: ox, y: oy });
                 return;
             }
 
             // GESTION DE LA LOUPE (1 doigt + Mode Pipette)
-            if (isPipetteMode && touches === 1) {
+            if (isPipetteMode && realTouches === 1) {
                 // @ts-ignore
                 const clientX = event.changedTouches ? event.changedTouches[0].clientX : event.clientX;
                 // @ts-ignore
@@ -169,7 +175,7 @@ export function ZoomableImage({ src, alt, onColorPick, className }: ZoomableImag
         },
         onPinch: ({ offset: [s], memo }) => {
             // Le pinch n'active jamais la loupe
-            setLoupe(null);
+            if (loupe) setLoupe(null);
             setScale(s);
             return memo;
         },
@@ -177,7 +183,7 @@ export function ZoomableImage({ src, alt, onColorPick, className }: ZoomableImag
         drag: {
             from: () => [position.x, position.y],
             filterTaps: true,
-            delay: true, // Aide à distinguer click/drag
+            delay: 150, // CRITIQUE : Attendre 150ms pour être sûr que ce n'est pas un début de pinch (2e doigt)
         },
         pinch: {
             scaleBounds: { min: 1, max: 8 },
@@ -185,7 +191,11 @@ export function ZoomableImage({ src, alt, onColorPick, className }: ZoomableImag
     });
 
     return (
-        <div className={cn("relative overflow-hidden bg-secondary/10 rounded-xl touch-none", className)} ref={containerRef}>
+        <div
+            className={cn("relative overflow-hidden bg-secondary/10 rounded-xl", className)}
+            ref={containerRef}
+            style={{ touchAction: 'none' }} // Force le blocking des gestes natifs
+        >
             {/* Toolbar */}
             <div className="absolute top-4 right-4 z-20 flex flex-col gap-2">
                 <button
