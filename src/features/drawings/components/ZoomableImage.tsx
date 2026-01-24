@@ -50,40 +50,27 @@ export function ZoomableImage({ src, alt, onColorPick, className }: ZoomableImag
         setPosition({ x: 0, y: 0 });
     };
 
-    const pickColor = (clientX: number, clientY: number) => {
+    const pickColorAtCenter = () => {
         const image = imageRef.current;
         const canvas = canvasRef.current;
         if (!image || !canvas || !onColorPick) return;
 
-        const rect = image.getBoundingClientRect();
+        // Le centre de l'écran (reticle) correspond au centre du conteneur.
+        // L'image est centrée par défaut (flex center).
+        // La transformation est : translate(pos) scale(scale) appliquée au centre de l'image.
+        // Donc le point sous le centre de l'écran est simplement l'inverse de la translation, déséchelée.
 
-        // Calculer la position relative dans l'image affichée
+        // Coordonnées du centre de l'image native
+        const centerX = image.naturalWidth / 2;
+        const centerY = image.naturalHeight / 2;
 
+        // Décalage du centre dû au pan (position), corrigé par le scale
+        const offsetX = -position.x / scale;
+        const offsetY = -position.y / scale;
 
-        // Convertir en coordonnées de l'image originale
-        // rect.width / scale est la largeur "non-zoomée/non-transformée" affichée
-        // Mais en fait, l'image est transformée par CSS.
-        // Le plus simple : Ratio intrinsèque vs affiché (sans scale)
-        // rect.width est la largeur affichée AVEC le scale.
-
-        // On doit trouver le ratio entre l'image naturelle et l'image affichée (sans le scale du zoom si possible, ou en le compensant)
-        // scale = current visual scale.
-        // visualWidth = naturalWidth * renderedScale * scale
-
-        // Approche plus simple :
-        // 1. Coordonnée x dans le repère du conteneur transformé.
-        // Le `rect` de l'image prend en compte le scale transform.
-
-        const relativeX = (clientX - rect.left);
-        const relativeY = (clientY - rect.top);
-
-        // Ratio de position (0 à 1)
-        const ratioX = relativeX / rect.width;
-        const ratioY = relativeY / rect.height;
-
-        // Pixel sur le canvas original
-        const pixelX = Math.floor(ratioX * image.naturalWidth);
-        const pixelY = Math.floor(ratioY * image.naturalHeight);
+        // Pixel ciblé
+        const pixelX = Math.floor(centerX + offsetX);
+        const pixelY = Math.floor(centerY + offsetY);
 
         const ctx = canvas.getContext('2d');
         if (ctx) {
@@ -102,39 +89,26 @@ export function ZoomableImage({ src, alt, onColorPick, className }: ZoomableImag
 
     const bind = useGesture({
         onDrag: ({ offset: [x, y] }) => {
-            if (isPipetteMode) return; // Pas de pan en mode pipette pour éviter confusion ? Ou alors pan à 2 doigts ?
-            // On limite le pan pour ne pas perdre l'image
+            // Pan toujours actif, même en mode pipette pour ajuster la visée
             setPosition({ x, y });
         },
         onPinch: ({ offset: [s], memo }) => {
-            if (isPipetteMode) return;
+            // Zoom toujours actif
             setScale(s);
             return memo;
         },
-        onClick: ({ event }) => {
-            if (isPipetteMode) {
-                // @ts-ignore - event.clientX existe sur MouseEvent et TouchEvent (via useGesture normalization souvent, mais ici c'est React.MouseEvent/TouchEvent mix)
-                // useGesture normalize souvent. Mais onClick est standard React ici sauf si configuré autrement.
-                // On va utiliser onPointerDown pour être safe ou extraction depuis event.
-                const clientX = (event as any).clientX;
-                const clientY = (event as any).clientY;
-                if (clientX && clientY) pickColor(clientX, clientY);
-            }
-        }
     }, {
         drag: {
             from: () => [position.x, position.y],
-            enabled: !isPipetteMode
         },
         pinch: {
             scaleBounds: { min: 1, max: 8 },
             modifierKey: null,
-            enabled: !isPipetteMode
         },
     });
 
     return (
-        <div className={cn("relative overflow-hidden bg-secondary/10 rounded-xl", className)} ref={containerRef}>
+        <div className={cn("relative overflow-hidden bg-secondary/10 rounded-xl touch-none", className)} ref={containerRef}>
             {/* Toolbar */}
             <div className="absolute top-4 right-4 z-20 flex flex-col gap-2">
                 <button
@@ -164,25 +138,34 @@ export function ZoomableImage({ src, alt, onColorPick, className }: ZoomableImag
                 )}
             </div>
 
-            {/* Mode Indicator Toast */}
-            {isPipetteMode && (
-                <div className="absolute top-4 left-4 z-20 pointer-events-none">
-                    <div className="bg-primary/90 text-primary-foreground px-4 py-2 rounded-full text-sm font-medium shadow-lg backdrop-blur-md animate-in fade-in slide-in-from-top-4">
-                        <span className="flex items-center gap-2">
-                            <Crosshair size={16} />
-                            Touchez pour pipeter
-                        </span>
-                    </div>
+            {/* Reticle & Action Button (Pipette Mode) */}
+            <div className={cn(
+                "absolute inset-0 z-10 pointer-events-none flex items-center justify-center transition-opacity duration-200",
+                isPipetteMode ? "opacity-100" : "opacity-0"
+            )}>
+                {/* Viseur au centre */}
+                <div className="relative">
+                    <Crosshair className="text-primary drop-shadow-md" size={48} strokeWidth={1.5} />
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1 h-1 bg-primary rounded-full" />
                 </div>
-            )}
+
+                {/* Bouton Scanner Flottant */}
+                <div className="absolute bottom-8 left-1/2 -translate-x-1/2 pointer-events-auto">
+                    <motion.button
+                        whileTap={{ scale: 0.95 }}
+                        onClick={pickColorAtCenter}
+                        className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-full shadow-xl font-bold text-lg ring-4 ring-background/50"
+                    >
+                        <Pipette size={20} />
+                        Scanner
+                    </motion.button>
+                </div>
+            </div>
 
             {/* Image & Interaction Layer */}
             <div
                 {...bind()}
-                className={cn(
-                    "w-full h-full flex items-center justify-center touch-none",
-                    isPipetteMode ? "cursor-crosshair" : "cursor-grab active:cursor-grabbing"
-                )}
+                className="w-full h-full flex items-center justify-center cursor-move"
                 style={{ minHeight: '300px' }}
             >
                 <div
