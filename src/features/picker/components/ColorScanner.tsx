@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Camera, Check, X, Save, History, Loader2, Image as ImageIcon } from 'lucide-react';
+import { Camera, Check, X, Save, History, Loader2, Image as ImageIcon, Droplets } from 'lucide-react';
 import { useDrawings } from '@/features/drawings/hooks/useDrawings';
 import { cloudflareApi } from '@/lib/cloudflare-api';
 import { cn } from '@/lib/utils';
@@ -35,6 +35,9 @@ export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
     // États pour la détection automatique
     const [isAutoCentering, setIsAutoCentering] = useState(false);
     const [showAutoCenterButton, setShowAutoCenterButton] = useState(false);
+
+    // État pour le mode pipette
+    const [isPipetteMode, setIsPipetteMode] = useState(false);
 
     // Refs pour le canvas et l'image
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -316,22 +319,24 @@ const handleImageLoad = () => {
         console.log('Pinch end');
     };
 
-    const handleColorPick = (e: React.MouseEvent) => {
+// Version simplifiée qui combine les deux handlers
+    const handleColorPick = (e: React.MouseEvent | React.TouchEvent) => {
+        if (!isPipetteMode) return; // Uniquement en mode pipette
+        
         if (!canvasRef.current || !imageRef.current || !containerRef.current || !imageSrc) return;
 
-        // Ignorer si on est en train de zoomer ou de dragger
+        // Ignorer si c'est un zoom (2 doigts) ou si on est en train de dragger
+        if ('touches' in e && e.touches.length !== 1) return;
         if (isDragging) return;
 
         console.log('Color pick event detected'); // Debug
 
         const img = imageRef.current;
-        
-        // Simpler: use image bounds directly for now
         const rect = img.getBoundingClientRect();
         
         // Position relative à l'image
-        const clientX = e.clientX;
-        const clientY = e.clientY;
+        const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+        const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
         
         const xInImage = clientX - rect.left;
         const yInImage = clientY - rect.top;
@@ -367,111 +372,15 @@ const handleImageLoad = () => {
             const hex = `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase()}`;
             console.log('Color picked:', hex); // Debug
             setPickedColor(hex);
+            setIsPipetteMode(false); // Désactiver après sélection
         } catch (error) {
             console.error('Error picking color:', error);
         }
     };
 
-    const handleTouchColorPick = (e: React.TouchEvent) => {
-        if (!canvasRef.current || !imageRef.current || !containerRef.current || !imageSrc) return;
+    
 
-        // Ignorer si c'est un zoom (2 doigts)
-        if (e.touches.length !== 1) return;
-        if (isDragging) return;
 
-        console.log('Touch color pick event detected'); // Debug
-
-        const img = imageRef.current;
-        const rect = img.getBoundingClientRect();
-        
-        const clientX = e.touches[0].clientX;
-        const clientY = e.touches[0].clientY;
-        
-        const xInImage = clientX - rect.left;
-        const yInImage = clientY - rect.top;
-
-        // Vérifier si le clic est dans la zone de l'image
-        if (xInImage < 0 || xInImage > rect.width || yInImage < 0 || yInImage > rect.height) {
-            console.log('Touch outside image bounds'); // Debug
-            return;
-        }
-
-        // Position sur le canvas original (simple scaling)
-        const naturalWidth = img.naturalWidth;
-        const naturalHeight = img.naturalHeight;
-        const sourceX = Math.floor((xInImage / rect.width) * naturalWidth);
-        const sourceY = Math.floor((yInImage / rect.height) * naturalHeight);
-
-        // Validation des limites
-        if (sourceX < 0 || sourceX >= naturalWidth || sourceY < 0 || sourceY >= naturalHeight) {
-            console.log('Touch outside canvas bounds'); // Debug
-            return;
-        }
-
-        // Lire la couleur
-        const touchCtx = canvasRef.current.getContext('2d', { willReadFrequently: true });
-        if (!touchCtx) return;
-
-        try {
-            const pixelData = touchCtx.getImageData(sourceX, sourceY, 1, 1).data;
-            const r = pixelData[0];
-            const g = pixelData[1];
-            const b = pixelData[2];
-
-            const hex = `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase()}`;
-            console.log('Touch color picked:', hex); // Debug
-            setPickedColor(hex);
-        } catch (error) {
-            console.error('Error picking touch color:', error);
-        }
-
-        const ctx = canvasRef.current.getContext('2d', { willReadFrequently: true });
-        if (!ctx) return;
-
-        // Moyenne des pixels environnants pour plus de stabilité (3x3)
-        let r = 0, g = 0, b = 0, count = 0;
-        const radius = 1;
-
-        try {
-            const startX = Math.max(0, sourceX - radius);
-            const startY = Math.max(0, sourceY - radius);
-            const endX = Math.min(naturalWidth, sourceX + radius + 1);
-            const endY = Math.min(naturalHeight, sourceY + radius + 1);
-
-            const pixelData = ctx.getImageData(startX, startY, endX - startX, endY - startY).data;
-
-            for (let i = 0; i < pixelData.length; i += 4) {
-                if (pixelData[i + 3] > 0) { // Ignorer les pixels transparents
-                    r += pixelData[i];
-                    g += pixelData[i + 1];
-                    b += pixelData[i + 2];
-                    count++;
-                }
-            }
-
-            if (count > 0) {
-                r = Math.round(r / count);
-                g = Math.round(g / count);
-                b = Math.round(b / count);
-            } else {
-                // Fallback sur un seul pixel
-                const p = ctx.getImageData(sourceX, sourceY, 1, 1).data;
-                r = p[0];
-                g = p[1];
-                b = p[2];
-            }
-        } catch {
-            // Fallback en cas d'erreur
-            const p = ctx.getImageData(sourceX, sourceY, 1, 1).data;
-            r = p[0];
-            g = p[1];
-            b = p[2];
-        }
-
-        // Hex conversion
-        const hex = `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase()}`;
-        setPickedColor(hex);
-    };
 
     const confirmColor = () => {
         if (pickedColor) {
@@ -563,13 +472,14 @@ const handleImageLoad = () => {
                             className="max-w-full max-h-full object-contain select-none shadow-2xl crosshair-cursor cursor-pointer"
                             style={{
                                 transform: `scale(${zoomLevel}) translate(${position.x / zoomLevel}px, ${position.y / zoomLevel}px)`,
-                                transition: isDragging ? 'none' : 'transform 0.2s ease-out'
+                                transition: isDragging ? 'none' : 'transform 0.2s ease-out',
+                                cursor: isPipetteMode ? 'crosshair' : 'grab'
                             }}
                             onLoad={handleImageLoad}
                             crossOrigin="anonymous" // Important pour les images R2
                             onClick={handleColorPick}
+                            onTouchStart={handleColorPick}
                             onMouseDown={handleMouseDown}
-                            onTouchStart={handleTouchColorPick}
                         />
 
                         {/* Canvas caché pour lecture */}
@@ -598,6 +508,36 @@ const handleImageLoad = () => {
                         >
                             🎯 Détecter
                         </button>
+
+                        {/* Bouton pipette */}
+                        <button
+                            onClick={() => setIsPipetteMode(!isPipetteMode)}
+                            className={`absolute bottom-24 right-4 px-4 py-3 rounded-xl transition-all flex items-center gap-2 border ${
+                                isPipetteMode 
+                                    ? 'bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20' 
+                                    : 'bg-white/10 backdrop-blur-md text-white hover:bg-white/20 border-white/20'
+                            }`}
+                        >
+                            <Droplets size={18} />
+                            <span className="text-sm font-medium">
+                                {isPipetteMode ? 'Pipette active' : 'Activer pipette'}
+                            </span>
+                        </button>
+
+                        {/* Indicateur visuel du mode pipette */}
+                        {isPipetteMode && (
+                            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+                                <div className="relative">
+                                    <div className="w-32 h-32 border-2 border-primary rounded-full animate-pulse" />
+                                    <div className="absolute inset-4 border border-primary rounded-full" />
+                                    <div className="absolute inset-8 border border-primary rounded-full" />
+                                    <div className="absolute inset-12 border border-primary rounded-full" />
+                                </div>
+                                <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-primary text-primary-foreground px-3 py-1 rounded-lg text-sm font-medium whitespace-nowrap">
+                                    Cliquez pour pipetter
+                                </div>
+                            </div>
+                        )}
 
                         {/* Indicateurs de zoom */}
                         {zoomLevel !== 1 && (
