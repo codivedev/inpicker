@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Plus, Trash2, Image as ImageIcon, Pencil, Camera, Search, Loader2 } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Image as ImageIcon, Pencil, Search, Loader2 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useDrawings, useDrawing } from '../hooks/useDrawings';
 import { cloudflareApi } from '@/lib/cloudflare-api';
 import pencilsData from '@/data/pencils.json';
 import { PencilPicker } from './PencilPicker';
+import { ZoomableImage } from './ZoomableImage';
+import { X } from 'lucide-react';
 
 export function DrawingDetail() {
     const navigate = useNavigate();
@@ -100,6 +102,46 @@ export function DrawingDetail() {
     // Construire l'URL de l'image
     const imageUrl = drawing.image_r2_key ? cloudflareApi.getImageUrl(drawing.image_r2_key) : null;
 
+    // Fonction de recherche du crayon le plus proche (Algorithme de distance euclidienne simple)
+    const findClosestPencil = (hexColor: string) => {
+        // Conversion hex à rgb
+        const r = parseInt(hexColor.slice(1, 3), 16);
+        const g = parseInt(hexColor.slice(3, 5), 16);
+        const b = parseInt(hexColor.slice(5, 7), 16);
+
+        let minDistance = Infinity;
+        let closest = null;
+
+        pencilsData.forEach(pencil => {
+            const pr = parseInt(pencil.hex.slice(1, 3), 16);
+            const pg = parseInt(pencil.hex.slice(3, 5), 16);
+            const pb = parseInt(pencil.hex.slice(5, 7), 16);
+
+            const distance = Math.sqrt(
+                Math.pow(r - pr, 2) +
+                Math.pow(g - pg, 2) +
+                Math.pow(b - pb, 2)
+            );
+
+            if (distance < minDistance) {
+                minDistance = distance;
+                closest = pencil;
+            }
+        });
+
+        return { closest, distance: minDistance };
+    };
+
+    const handleColorPick = (hex: string) => {
+        const result = findClosestPencil(hex);
+        if (result.closest) {
+            setPickedColor({ hex, matchedPencil: result.closest });
+        }
+    };
+
+    // State pour la couleur pipetée
+    const [pickedColor, setPickedColor] = useState<{ hex: string, matchedPencil: typeof pencilsData[0] } | null>(null);
+
     return (
         <div className="min-h-screen bg-background pb-20">
             {/* Header */}
@@ -140,35 +182,95 @@ export function DrawingDetail() {
                 </button>
             </div>
 
-            {/* Image de référence */}
-            <div className="p-4">
-                <label className="relative aspect-video rounded-2xl bg-secondary/30 border border-dashed border-border overflow-hidden flex items-center justify-center cursor-pointer group">
-                    <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImageChange}
-                        className="hidden"
-                    />
 
-                    {imageUrl ? (
-                        <>
-                            <img
-                                src={imageUrl}
-                                alt={drawing.title}
-                                className="w-full h-full object-contain"
-                            />
-                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                <Camera size={32} className="text-white" />
-                            </div>
-                        </>
-                    ) : (
+
+
+            {/* Zone Image avec Zoom & Pipette */}
+            <div className="p-4 relative z-0">
+                {imageUrl ? (
+                    <ZoomableImage
+                        src={imageUrl}
+                        alt={drawing.title}
+                        onColorPick={handleColorPick}
+                        className="aspect-video w-full rounded-2xl shadow-sm border"
+                    />
+                ) : (
+                    <label className="relative aspect-video rounded-2xl bg-secondary/30 border border-dashed border-border overflow-hidden flex items-center justify-center cursor-pointer group">
+                        <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageChange}
+                            className="hidden"
+                        />
                         <div className="text-center text-muted-foreground">
                             <ImageIcon size={48} className="mx-auto mb-2 opacity-50" />
                             <p className="text-sm">Toucher pour ajouter une image</p>
                         </div>
-                    )}
-                </label>
+                    </label>
+                )}
             </div>
+
+            {/* Résultat Pipette (Mini-Drawer) */}
+            <AnimatePresence>
+                {pickedColor && (
+                    <div className="fixed inset-0 z-50 flex items-end justify-center pointer-events-none">
+                        {/* Pas de backdrop bloquant pour permettre de continuer à pipeter si on veut, 
+                            mais on doit pouvoir fermer. On met un backdrop transparent interactif qui ferme */}
+                        <div className="absolute inset-0 pointer-events-auto" onClick={() => setPickedColor(null)} />
+
+                        <motion.div
+                            initial={{ y: '100%', opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            exit={{ y: '100%', opacity: 0 }}
+                            className="bg-card w-full max-w-md m-4 p-4 rounded-2xl shadow-2xl border pointer-events-auto relative"
+                        >
+                            <button
+                                onClick={() => setPickedColor(null)}
+                                className="absolute top-2 right-2 p-1 text-muted-foreground hover:bg-muted rounded-full"
+                            >
+                                <X size={16} />
+                            </button>
+
+                            <div className="flex gap-4">
+                                <div className="space-y-2">
+                                    <div className="text-xs font-semibold text-muted-foreground uppercase">Couleur pointée</div>
+                                    <div
+                                        className="w-16 h-16 rounded-xl shadow-inner border"
+                                        style={{ backgroundColor: pickedColor.hex }}
+                                    />
+                                    <div className="text-center font-mono text-xs">{pickedColor.hex}</div>
+                                </div>
+
+                                <div className="flex-1 space-y-2">
+                                    <div className="text-xs font-semibold text-muted-foreground uppercase">Crayon suggéré</div>
+                                    <div className="flex items-center gap-3 p-2 bg-secondary/30 rounded-xl">
+                                        <div
+                                            className="w-10 h-10 rounded-lg shadow-sm border"
+                                            style={{ backgroundColor: pickedColor.matchedPencil.hex }}
+                                        />
+                                        <div className="min-w-0">
+                                            <div className="font-bold truncate">{pickedColor.matchedPencil.name}</div>
+                                            <div className="text-xs text-muted-foreground truncate">
+                                                {pickedColor.matchedPencil.brand} • {pickedColor.matchedPencil.id}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => {
+                                            const pencilId = `${pickedColor.matchedPencil.brand}-${pickedColor.matchedPencil.id}`;
+                                            addPencilToDrawing(drawingId, pencilId);
+                                            setPickedColor(null);
+                                        }}
+                                        className="w-full py-2 bg-primary text-primary-foreground text-sm font-bold rounded-lg hover:opacity-90 active:scale-95 transition-all"
+                                    >
+                                        Ajouter au dessin
+                                    </button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
 
             {/* Liste des crayons */}
             <div className="p-4">
@@ -293,6 +395,6 @@ export function DrawingDetail() {
                 }}
                 excludedPencilIds={drawing.pencilIds}
             />
-        </div>
+        </div >
     );
 }
