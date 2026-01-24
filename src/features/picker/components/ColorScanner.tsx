@@ -24,6 +24,16 @@ export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
     const [showHistory, setShowHistory] = useState(false);
     const [activeDrawingId, setActiveDrawingId] = useState<number | null>(null);
 
+    // États pour le zoom
+    const [zoomLevel, setZoomLevel] = useState(1);
+    const [position, setPosition] = useState({ x: 0, y: 0 });
+    const [isDragging, setIsDragging] = useState(false);
+    const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+
+    // États pour la détection automatique
+    const [isAutoCentering, setIsAutoCentering] = useState(false);
+    const [showAutoCenterButton, setShowAutoCenterButton] = useState(false);
+
     // Refs pour le canvas et l'image
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const imageRef = useRef<HTMLImageElement | null>(null);
@@ -80,61 +90,269 @@ export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
             canvas.height = img.naturalHeight;
             const ctx = canvas.getContext('2d');
             ctx?.drawImage(img, 0, 0);
+            
+            // Vérifier si l'image a besoin d'un recentrage automatique
+            detectDrawingBounds();
         }
+    };
+
+    // Détection automatique des contours du dessin
+    const detectDrawingBounds = () => {
+        if (!canvasRef.current || !imageRef.current) return;
+
+        const canvas = canvasRef.current;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+
+        let minX = canvas.width, minY = canvas.height, maxX = 0, maxY = 0;
+        let hasContent = false;
+
+        // Analyser les pixels pour trouver les contours
+        for (let y = 0; y < canvas.height; y++) {
+            for (let x = 0; x < canvas.width; x++) {
+                const idx = (y * canvas.width + x) * 4;
+                const r = data[idx];
+                const g = data[idx + 1];
+                const b = data[idx + 2];
+                const a = data[idx + 3];
+
+                // Détecter les pixels non-blancs avec un certain seuil
+                if (a > 0 && (r < 240 || g < 240 || b < 240)) {
+                    hasContent = true;
+                    minX = Math.min(minX, x);
+                    minY = Math.min(minY, y);
+                    maxX = Math.max(maxX, x);
+                    maxY = Math.max(maxY, y);
+                }
+            }
+        }
+
+        // Si on a détecté un dessin qui n'occupe pas tout l'espace
+        if (hasContent) {
+            const padding = 20; // Marge de sécurité
+            const cropWidth = maxX - minX + padding * 2;
+            const cropHeight = maxY - minY + padding * 2;
+            
+            // Si la zone détectée est significativement plus petite que l'image
+            if (cropWidth < canvas.width * 0.8 || cropHeight < canvas.height * 0.8) {
+                setShowAutoCenterButton(true);
+            }
+        }
+    };
+
+    // Recentre automatiquement sur le dessin détecté
+    const autoCenterDrawing = async () => {
+        if (!canvasRef.current || !imageRef.current) return;
+
+        setIsAutoCentering(true);
+        
+        try {
+            const canvas = canvasRef.current;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return;
+
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+
+            let minX = canvas.width, minY = canvas.height, maxX = 0, maxY = 0;
+            let hasContent = false;
+
+            // Trouver les limites exactes du dessin
+            for (let y = 0; y < canvas.height; y++) {
+                for (let x = 0; x < canvas.width; x++) {
+                    const idx = (y * canvas.width + x) * 4;
+                    const r = data[idx];
+                    const g = data[idx + 1];
+                    const b = data[idx + 2];
+                    const a = data[idx + 3];
+
+                    if (a > 0 && (r < 240 || g < 240 || b < 240)) {
+                        hasContent = true;
+                        minX = Math.min(minX, x);
+                        minY = Math.min(minY, y);
+                        maxX = Math.max(maxX, x);
+                        maxY = Math.max(maxY, y);
+                    }
+                }
+            }
+
+            if (hasContent) {
+                const padding = Math.max(30, Math.min(canvas.width, canvas.height) * 0.05);
+                const cropX = Math.max(0, minX - padding);
+                const cropY = Math.max(0, minY - padding);
+                const cropWidth = Math.min(canvas.width - cropX, maxX - minX + padding * 2);
+                const cropHeight = Math.min(canvas.height - cropY, maxY - minY + padding * 2);
+
+                // Créer un canvas temporaire pour le crop
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = cropWidth;
+                tempCanvas.height = cropHeight;
+                const tempCtx = tempCanvas.getContext('2d');
+                
+                if (tempCtx) {
+                    tempCtx.drawImage(canvas, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
+                    
+                    // Redimensionner le canvas principal
+                    canvas.width = cropWidth;
+                    canvas.height = cropHeight;
+                    ctx.drawImage(tempCanvas, 0, 0);
+                    
+                    // Mettre à jour l'image affichée
+                    const croppedImageUrl = canvas.toDataURL();
+                    setImageSrc(croppedImageUrl);
+                    
+                    // Réinitialiser le zoom et la position
+                    setZoomLevel(1);
+                    setPosition({ x: 0, y: 0 });
+                    setShowAutoCenterButton(false);
+                }
+            }
+        } catch (error) {
+            console.error('Erreur lors du recentrage automatique:', error);
+        } finally {
+            setIsAutoCentering(false);
+        }
+    };
+
+    // Gestion du zoom avec la molette
+    const handleWheel = (e: React.WheelEvent) => {
+        e.preventDefault();
+        
+        if (!containerRef.current || !imageRef.current) return;
+
+        const container = containerRef.current;
+        const rect = container.getBoundingClientRect();
+        
+        // Calculer le point de zoom relatif à l'image
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        // Ajuster le zoom
+        const delta = e.deltaY > 0 ? 0.9 : 1.1;
+        const newZoom = Math.min(Math.max(0.5, zoomLevel * delta), 5);
+        
+        if (newZoom !== zoomLevel) {
+            // Calculer la nouvelle position pour garder le point sous la souris
+            const zoomRatio = newZoom / zoomLevel;
+            const newX = x - (x - position.x) * zoomRatio;
+            const newY = y - (y - position.y) * zoomRatio;
+            
+            setZoomLevel(newZoom);
+            setPosition({ x: newX, y: newY });
+        }
+    };
+
+    // Gestion du drag pour déplacer l'image zoomée
+    const handleMouseDown = (e: React.MouseEvent) => {
+        if (zoomLevel > 1) {
+            setIsDragging(true);
+            setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
+        }
+    };
+
+    const handleMouseMove = (e: React.MouseEvent) => {
+        if (isDragging && zoomLevel > 1) {
+            setPosition({
+                x: e.clientX - dragStart.x,
+                y: e.clientY - dragStart.y
+            });
+        }
+    };
+
+    const handleMouseUp = () => {
+        setIsDragging(false);
+    };
+
+    // Gestion du pincement sur mobile
+    const [lastTouchDistance, setLastTouchDistance] = useState<number | null>(null);
+
+    const handleTouchStart = (e: React.TouchEvent) => {
+        if (e.touches.length === 2) {
+            const dx = e.touches[0].clientX - e.touches[1].clientX;
+            const dy = e.touches[0].clientY - e.touches[1].clientY;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            setLastTouchDistance(distance);
+        }
+    };
+
+    const handleTouchMove = (e: React.TouchEvent) => {
+        if (e.touches.length === 2 && lastTouchDistance !== null) {
+            e.preventDefault();
+            
+            const dx = e.touches[0].clientX - e.touches[1].clientX;
+            const dy = e.touches[0].clientY - e.touches[1].clientY;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            const scale = distance / lastTouchDistance;
+            const newZoom = Math.min(Math.max(0.5, zoomLevel * scale), 5);
+            
+            setZoomLevel(newZoom);
+            setLastTouchDistance(distance);
+        }
+    };
+
+    const handleTouchEnd = () => {
+        setLastTouchDistance(null);
     };
 
     const handleTouch = (e: React.MouseEvent | React.TouchEvent) => {
         if (!canvasRef.current || !imageRef.current || !containerRef.current || !imageSrc) return;
 
+        // Ignorer si c'est un événement de zoom ou de drag
+        if ('touches' in e && e.touches.length === 2) return;
+        if (isDragging) return;
+
         const img = imageRef.current;
-        const rect = img.getBoundingClientRect();
+        const rect = containerRef.current.getBoundingClientRect();
+        
+        // Position tenant compte du zoom et du déplacement
+        const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+        const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
+        const actualX = clientX - rect.left;
+        const actualY = clientY - rect.top;
+        
+        // Position relative à l'image zoomée et déplacée
+        const xInZoomedImage = (actualX - position.x) / zoomLevel;
+        const yInZoomedImage = (actualY - position.y) / zoomLevel;
 
         // Dimensions naturelles de l'image
         const naturalWidth = img.naturalWidth;
         const naturalHeight = img.naturalHeight;
 
-        // Calculer la taille réelle de l'image affichée avec object-contain
+        // Dimensions de l'image affichée (sans zoom)
         const containerAspect = rect.width / rect.height;
         const imageAspect = naturalWidth / naturalHeight;
 
-        let displayedWidth: number;
-        let displayedHeight: number;
-        let offsetX: number;
-        let offsetY: number;
+        let baseWidth: number, baseHeight: number, baseOffsetX: number, baseOffsetY: number;
 
         if (imageAspect > containerAspect) {
-            // L'image est plus large que le conteneur → limitée par la largeur
-            displayedWidth = rect.width;
-            displayedHeight = rect.width / imageAspect;
-            offsetX = 0;
-            offsetY = (rect.height - displayedHeight) / 2;
+            baseWidth = rect.width;
+            baseHeight = rect.width / imageAspect;
+            baseOffsetX = 0;
+            baseOffsetY = (rect.height - baseHeight) / 2;
         } else {
-            // L'image est plus haute que le conteneur → limitée par la hauteur
-            displayedHeight = rect.height;
-            displayedWidth = rect.height * imageAspect;
-            offsetX = (rect.width - displayedWidth) / 2;
-            offsetY = 0;
+            baseHeight = rect.height;
+            baseWidth = rect.height * imageAspect;
+            baseOffsetX = (rect.width - baseWidth) / 2;
+            baseOffsetY = 0;
         }
 
-        const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
-        const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
-
-        // Position relative au conteneur img
-        const xInContainer = clientX - rect.left;
-        const yInContainer = clientY - rect.top;
-
-        // Position relative à l'image affichée (en enlevant les offsets de centrage)
-        const xInImage = xInContainer - offsetX;
-        const yInImage = yInContainer - offsetY;
-
-        // Vérifier si le clic est dans la zone de l'image visible
-        if (xInImage < 0 || xInImage > displayedWidth || yInImage < 0 || yInImage > displayedHeight) {
-            return; // Clic en dehors de l'image visible
+        // Vérifier si le clic est dans la zone de l'image
+        if (xInZoomedImage < baseOffsetX || xInZoomedImage > baseOffsetX + baseWidth || 
+            yInZoomedImage < baseOffsetY || yInZoomedImage > baseOffsetY + baseHeight) {
+            return;
         }
+
+        // Position relative à l'image elle-même (sans les offsets)
+        const xInImage = xInZoomedImage - baseOffsetX;
+        const yInImage = yInZoomedImage - baseOffsetY;
 
         // Ratio pour obtenir la position sur le canvas original
-        const scaleX = naturalWidth / displayedWidth;
-        const scaleY = naturalHeight / displayedHeight;
+        const scaleX = naturalWidth / baseWidth;
+        const scaleY = naturalHeight / baseHeight;
 
         const sourceX = Math.floor(xInImage * scaleX);
         const sourceY = Math.floor(yInImage * scaleY);
@@ -266,20 +484,62 @@ export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
                 ) : (
                     <div
                         ref={containerRef}
-                        className="relative w-full h-full flex items-center justify-center touch-none"
+                        className="relative w-full h-full flex items-center justify-center touch-none overflow-hidden"
+                        onWheel={handleWheel}
+                        onMouseMove={handleMouseMove}
+                        onMouseUp={handleMouseUp}
+                        onMouseLeave={handleMouseUp}
                     >
                         <img
                             ref={imageRef}
                             src={imageSrc}
                             alt="Scan target"
-                            className="max-w-full max-h-full object-contain select-none shadow-2xl crosshair-cursor"
+                            className="max-w-full max-h-full object-contain select-none shadow-2xl crosshair-cursor cursor-pointer"
+                            style={{
+                                transform: `scale(${zoomLevel}) translate(${position.x / zoomLevel}px, ${position.y / zoomLevel}px)`,
+                                transition: isDragging ? 'none' : 'transform 0.2s ease-out'
+                            }}
                             onLoad={handleImageLoad}
                             crossOrigin="anonymous" // Important pour les images R2
                             onClick={handleTouch}
+                            onMouseDown={handleMouseDown}
+                            onTouchStart={handleTouchStart}
+                            onTouchMove={handleTouchMove}
+                            onTouchEnd={handleTouchEnd}
                         />
 
                         {/* Canvas caché pour lecture */}
                         <canvas ref={canvasRef} className="hidden" />
+
+                        {/* Bouton de recentrage automatique */}
+                        {showAutoCenterButton && (
+                            <button
+                                onClick={autoCenterDrawing}
+                                disabled={isAutoCentering}
+                                className="absolute top-4 left-4 bg-white/10 backdrop-blur-md text-white px-4 py-2 rounded-xl hover:bg-white/20 transition-all flex items-center gap-2 border border-white/20"
+                            >
+                                {isAutoCentering ? (
+                                    <Loader2 className="animate-spin" size={16} />
+                                ) : (
+                                    <Camera size={16} />
+                                )}
+                                Recentrer le dessin
+                            </button>
+                        )}
+
+                        {/* Indicateurs de zoom */}
+                        {zoomLevel !== 1 && (
+                            <div className="absolute top-4 right-4 bg-white/10 backdrop-blur-md text-white px-3 py-1 rounded-lg text-sm border border-white/20">
+                                {Math.round(zoomLevel * 100)}%
+                            </div>
+                        )}
+
+                        {/* Instructions de zoom */}
+                        <div className="absolute bottom-20 left-4 bg-white/5 backdrop-blur-sm text-white/60 text-xs px-3 py-2 rounded-lg border border-white/10">
+                            <div>🖱️ Molette pour zoomer</div>
+                            <div>📱 Pincement pour zoomer</div>
+                            <div>✋ Déplacer l'image zoomée</div>
+                        </div>
                     </div>
                 )}
             </div>
