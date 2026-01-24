@@ -24,18 +24,25 @@ export function ColorResult({ color, match, alternatives, drawingId }: ColorResu
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [showDrawingPicker, setShowDrawingPicker] = useState(false);
     const [addedToDrawing, setAddedToDrawing] = useState(false);
+    const [overrideMatch, setOverrideMatch] = useState<MatchResult | null>(null);
 
     // Ré-agrandir si une nouvelle couleur est pickée
     useEffect(() => {
-        if (color) setIsCollapsed(false);
+        if (color) {
+            setIsCollapsed(false);
+            setOverrideMatch(null);
+            setAddedToDrawing(false);
+        }
     }, [color]);
 
-    if (!color || !match) return null;
+    const activeMatch = overrideMatch || match;
 
-    const owned = isOwned(match.pencil);
-    const confidenceColor = match.confidence > 90
+    if (!color || !activeMatch) return null;
+
+    const owned = isOwned(activeMatch.pencil);
+    const confidenceColor = activeMatch.confidence > 90
         ? 'text-green-500'
-        : match.confidence > 70
+        : activeMatch.confidence > 70
             ? 'text-yellow-500'
             : 'text-orange-500';
 
@@ -68,13 +75,13 @@ export function ColorResult({ color, match, alternatives, drawingId }: ColorResu
                         )}
 
                         {isCollapsed && (
-                            <div className="flex items-center gap-2 pl-1">
+                                <div className="flex items-center gap-2 pl-1">
                                 <div
                                     className="w-4 h-4 rounded-full border border-white/20"
                                     style={{ backgroundColor: color }}
                                 />
                                 <span className="text-xs font-bold truncate max-w-[100px]">
-                                    {match.pencil.name}
+                                    {activeMatch.pencil.name}
                                 </span>
                             </div>
                         )}
@@ -126,18 +133,18 @@ export function ColorResult({ color, match, alternatives, drawingId }: ColorResu
                                         <div className="flex-1">
                                             <div className="flex justify-between items-start mb-1">
                                                 <span className="text-xs font-bold text-muted-foreground uppercase tracking-wide">
-                                                    Meilleur Match
+                                                    {overrideMatch ? "Alternative Choisie" : "Meilleur Match"}
                                                 </span>
                                                 <span className={cn("text-xs font-bold", confidenceColor)}>
-                                                    {match.confidence}%
+                                                    {activeMatch.confidence}%
                                                 </span>
                                             </div>
 
                                             <h3 className="text-lg font-bold leading-tight mb-1">
-                                                {match.pencil.name}
+                                                {activeMatch.pencil.name}
                                             </h3>
                                             <p className="text-sm text-foreground/70 mb-2">
-                                                {match.pencil.brand} • <span className="font-mono bg-secondary px-1 rounded text-xs">{match.pencil.id}</span>
+                                                {activeMatch.pencil.brand} • <span className="font-mono bg-secondary px-1 rounded text-xs">{activeMatch.pencil.id}</span>
                                             </p>
 
                                             <div className="flex items-center gap-2">
@@ -158,7 +165,7 @@ export function ColorResult({ color, match, alternatives, drawingId }: ColorResu
                                         {/* Couleur Crayon */}
                                         <div
                                             className="w-8 h-full min-h-[80px] rounded-r-xl border-l-4 border-black/10 relative overflow-hidden"
-                                            style={{ backgroundColor: match.pencil.hex }}
+                                            style={{ backgroundColor: activeMatch.pencil.hex }}
                                         >
                                             <div className="absolute inset-0 bg-gradient-to-r from-black/10 to-transparent pointer-events-none" />
                                         </div>
@@ -176,7 +183,17 @@ export function ColorResult({ color, match, alternatives, drawingId }: ColorResu
                                         {alternatives.map((alt) => (
                                             <div
                                                 key={getPencilId(alt.pencil)}
-                                                className="flex items-center gap-3 p-2 bg-secondary/50 rounded-2xl border border-transparent hover:border-border transition-colors cursor-pointer group"
+                                                onClick={() => {
+                                                    setOverrideMatch(alt);
+                                                    setViewMode('summary');
+                                                    setAddedToDrawing(false);
+                                                }}
+                                                className={cn(
+                                                    "flex items-center gap-3 p-2 rounded-2xl border transition-colors cursor-pointer group",
+                                                    overrideMatch?.pencil.id === alt.pencil.id 
+                                                        ? "bg-primary/10 border-primary/30" 
+                                                        : "bg-secondary/50 border-transparent hover:border-border"
+                                                )}
                                             >
                                                 <div
                                                     className="w-10 h-10 rounded-xl shadow-sm border border-white/20"
@@ -184,7 +201,9 @@ export function ColorResult({ color, match, alternatives, drawingId }: ColorResu
                                                 />
                                                 <div className="flex-1 min-w-0">
                                                     <h4 className="text-sm font-bold truncate">{alt.pencil.name}</h4>
-                                                    <p className="text-xs text-muted-foreground truncate">{alt.pencil.brand}</p>
+                                                    <p className="text-xs text-muted-foreground truncate">
+                                                        {alt.pencil.brand} • <span className="font-mono bg-secondary px-1 rounded text-[10px]">{alt.pencil.id}</span>
+                                                    </p>
                                                 </div>
                                                 <div className="text-right">
                                                     <span className="text-xs font-bold text-muted-foreground">{alt.confidence}%</span>
@@ -217,10 +236,10 @@ export function ColorResult({ color, match, alternatives, drawingId }: ColorResu
                                             <div className="p-3 bg-secondary/30 rounded-2xl border">
                                                 <p className="text-[10px] font-bold text-muted-foreground uppercase mb-1">Match (Crayon)</p>
                                                 <div className="flex items-center gap-2">
-                                                    <div className="w-4 h-4 rounded-sm border" style={{ backgroundColor: match.pencil.hex }} />
-                                                    <span className="text-sm font-mono truncate">{match.pencil.hex}</span>
+                                                    <div className="w-4 h-4 rounded-sm border" style={{ backgroundColor: activeMatch.pencil.hex }} />
+                                                    <span className="text-sm font-mono truncate">{activeMatch.pencil.hex}</span>
                                                 </div>
-                                                <p className="text-[10px] text-muted-foreground mt-1">Delta E: {match.distance.toFixed(2)}</p>
+                                                <p className="text-[10px] text-muted-foreground mt-1">Delta E: {activeMatch.distance.toFixed(2)}</p>
                                             </div>
                                         </div>
 
@@ -245,7 +264,7 @@ export function ColorResult({ color, match, alternatives, drawingId }: ColorResu
                                     {drawingId ? (
                                         <button
                                             onClick={async () => {
-                                                await addPencilToDrawing(drawingId, getPencilId(match.pencil));
+                                                await addPencilToDrawing(drawingId, getPencilId(activeMatch.pencil));
                                                 setAddedToDrawing(true);
                                             }}
                                             disabled={addedToDrawing}
@@ -292,7 +311,7 @@ export function ColorResult({ color, match, alternatives, drawingId }: ColorResu
                 isOpen={showDrawingPicker}
                 onClose={() => setShowDrawingPicker(false)}
                 onSelect={() => setShowDrawingPicker(false)}
-                pencilId={getPencilId(match.pencil)}
+                pencilId={getPencilId(activeMatch.pencil)}
             />
         </AnimatePresence>
     );
