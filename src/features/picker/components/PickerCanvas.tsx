@@ -287,6 +287,7 @@ const handleSaveDrawing = async () => {
                 match={matchResult}
                 alternatives={alternatives}
                 drawingId={activeDrawingId || undefined}
+                isPicking={!!loupe}
             />
 
             {/* Modale d'enregistrement */}

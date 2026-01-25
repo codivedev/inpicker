@@ -581,6 +581,7 @@ export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
                     alternatives={alternatives}
                     drawingId={activeDrawingId || undefined}
                     onConfirm={confirmColor}
+                    isPicking={!!loupe}
                 />
             )}
         </div>

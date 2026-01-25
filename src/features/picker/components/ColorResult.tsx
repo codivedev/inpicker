@@ -15,11 +15,12 @@ interface ColorResultProps {
     alternatives: MatchResult[];
     drawingId?: number;
     onConfirm?: () => void;
+    isPicking?: boolean;
 }
 
 type ViewMode = 'summary' | 'alternatives' | 'details';
 
-export function ColorResult({ color, match, alternatives, drawingId, onConfirm }: ColorResultProps) {
+export function ColorResult({ color, match, alternatives, drawingId, onConfirm, isPicking }: ColorResultProps) {
     const { isOwned, togglePencil } = useInventory();
     const { addPencilToDrawing } = useDrawings();
     const { addFavorite, removeFavorite, isFavorite } = useFavorites();
@@ -29,14 +30,18 @@ export function ColorResult({ color, match, alternatives, drawingId, onConfirm }
     const [addedToDrawing, setAddedToDrawing] = useState(false);
     const [overrideMatch, setOverrideMatch] = useState<MatchResult | null>(null);
 
-    // Ré-agrandir si une nouvelle couleur est pickée
+    // Ré-agrandir si une nouvelle couleur est pickée (mais pas pendant le drag)
     useEffect(() => {
         if (color) {
-            setIsCollapsed(false);
+            if (isPicking) {
+                setIsCollapsed(true);
+            } else {
+                setIsCollapsed(false);
+            }
             setOverrideMatch(null);
             setAddedToDrawing(false);
         }
-    }, [color]);
+    }, [color, isPicking]);
 
     const activeMatch = overrideMatch || match;
 
@@ -83,7 +88,8 @@ export function ColorResult({ color, match, alternatives, drawingId, onConfirm }
             >
                 <div className={cn(
                     "bg-card border shadow-2xl rounded-3xl mx-auto pointer-events-auto overflow-hidden transition-all duration-300 ease-in-out",
-                    isCollapsed ? "max-w-[200px] p-2" : "max-w-md p-5"
+                    isCollapsed ? "max-w-[200px] p-2" : "max-w-md p-5",
+                    isPicking && "opacity-60 scale-95 origin-bottom"
                 )}>
 
                     {/* Header dynamique */}
