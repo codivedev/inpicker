@@ -77,12 +77,16 @@ export function useImagePicker(options: UseImagePickerOptions = {}) {
         const xPercent = x / rect.width;
         const yPercent = y / rect.height;
 
+        // Sécurité : si on touche en dehors de l'image (padding du container)
+        if (xPercent < 0 || xPercent > 1 || yPercent < 0 || yPercent > 1) return null;
+
         // Coordonnées pixel dans l'image naturelle
         const pixelX = Math.floor(xPercent * image.naturalWidth);
         const pixelY = Math.floor(yPercent * image.naturalHeight);
 
         const ctx = canvas.getContext('2d', { willReadFrequently: true });
         if (ctx) {
+            // Sécurité sup pour les bords
             const safeX = Math.max(0, Math.min(pixelX, image.naturalWidth - 1));
             const safeY = Math.max(0, Math.min(pixelY, image.naturalHeight - 1));
             const pixelData = ctx.getImageData(safeX, safeY, 1, 1).data;
@@ -122,20 +126,18 @@ export function useImagePicker(options: UseImagePickerOptions = {}) {
 
                 const color = getPixelColor(clientX, clientY);
                 if (color) {
-                    const rect = containerRef.current?.getBoundingClientRect();
-                    if (rect) {
-                        setLoupe({
-                            x: clientX - rect.left,
-                            y: clientY - rect.top,
-                            color
-                        });
+                    // CRITIQUE : on utilise clientX/Y directs pour l'overlay fixed
+                    setLoupe({
+                        x: clientX,
+                        y: clientY,
+                        color
+                    });
 
-                        // Feedback immédiat : on met à jour la couleur et le match en temps réel
-                        setPickedColor(color);
-                        const matches = findTopMatches(color, 6);
-                        setMatchResult(matches.length > 0 ? matches[0] : null);
-                        setAlternatives(matches.slice(1));
-                    }
+                    // Feedback immédiat
+                    setPickedColor(color);
+                    const matches = findTopMatches(color, 6);
+                    setMatchResult(matches.length > 0 ? matches[0] : null);
+                    setAlternatives(matches.slice(1));
                 }
 
                 if (last) {

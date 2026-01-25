@@ -206,14 +206,20 @@ export function PickerCanvas() {
                             transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})`,
                             touchAction: 'none'
                         }}
-                        className="origin-center will-change-transform"
+                        className="origin-center will-change-transform flex items-center justify-center"
                     >
                         <img
                             ref={refs.imageRef}
                             src={imageSrc}
                             alt="Work"
-                            className="max-w-[none] shadow-2xl pointer-events-none select-none"
-                            style={{ maxHeight: '80vh', maxWidth: '90vw', objectFit: 'contain' }}
+                            className="shadow-2xl pointer-events-none select-none display-block"
+                            style={{
+                                maxHeight: '80vh',
+                                maxWidth: '90vw',
+                                width: 'auto',
+                                height: 'auto',
+                                objectFit: 'fill' // "fill" ici car l'élément lui-même a déjà le bon aspect-ratio via auto/auto
+                            }}
                             onLoad={onImageLoad}
                             draggable={false}
                         />
@@ -233,7 +239,7 @@ export function PickerCanvas() {
                         exit={{ scale: 0, opacity: 0 }}
                         style={{
                             left: loupe.x,
-                            top: loupe.y - 120,
+                            top: loupe.y - 140, // Un peu plus haut pour dégager le doigt
                         }}
                         className="fixed z-50 pointer-events-none -translate-x-1/2 -translate-y-1/2"
                     >
@@ -241,11 +247,12 @@ export function PickerCanvas() {
                             <div className="w-28 h-28 rounded-full border-4 border-white shadow-2xl flex items-center justify-center overflow-hidden bg-white">
                                 <div className="w-full h-full" style={{ backgroundColor: loupe.color }} />
                             </div>
+                            {/* Crosshair central */}
                             <div className="absolute inset-0 flex items-center justify-center">
-                                <Plus className="text-black/50 drop-shadow-sm" size={14} strokeWidth={3} />
-                                <Plus className="absolute text-white/50 drop-shadow-sm" size={14} strokeWidth={2} />
+                                <Plus className="text-black/30" size={16} strokeWidth={4} />
+                                <Plus className="absolute text-white/70" size={16} strokeWidth={2} />
                             </div>
-                            <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-black/80 text-white text-xs font-mono px-2 py-1 rounded-md whitespace-nowrap">
+                            <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-black/80 text-white text-xs font-mono px-2 py-1 rounded-md whitespace-nowrap shadow-lg">
                                 {loupe.color}
                             </div>
                         </div>
