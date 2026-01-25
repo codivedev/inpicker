@@ -29,7 +29,10 @@ export function useImagePicker(options: UseImagePickerOptions = {}) {
     const containerRef = useRef<HTMLDivElement | null>(null);
     const imageRef = useRef<HTMLImageElement | null>(null);
 
-    useInventory(); // Pour plus tard si on filtre par inventaire
+    const { ownedPencils } = useInventory();
+    const ownedPencilsIds = ownedPencils
+        .filter(p => p.is_owned === 1)
+        .map(p => p.id);
 
     // Mettre à jour l'image si initialImage change
     useEffect(() => {
@@ -42,7 +45,7 @@ export function useImagePicker(options: UseImagePickerOptions = {}) {
             setLoupe(null);
             setIsPipetteMode(false); // Reset mode
         }
-    }, [options.initialImage]);
+    }, [options.initialImage, imageSrc]);
 
     // Gestion de l'import image
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -73,11 +76,11 @@ export function useImagePicker(options: UseImagePickerOptions = {}) {
         const x = clientX - rect.left;
         const y = clientY - rect.top;
 
-        // Ratio par rapport à la taille affichée (getBoundingClientRect contient déjà le scale)
+        // Ratio par rapport à la taille affichée
         const xPercent = x / rect.width;
         const yPercent = y / rect.height;
 
-        // Sécurité : si on touche en dehors de l'image (padding du container)
+        // Sécurité : si on touche en dehors de l'image
         if (xPercent < 0 || xPercent > 1 || yPercent < 0 || yPercent > 1) return null;
 
         // Coordonnées pixel dans l'image naturelle
@@ -86,7 +89,6 @@ export function useImagePicker(options: UseImagePickerOptions = {}) {
 
         const ctx = canvas.getContext('2d', { willReadFrequently: true });
         if (ctx) {
-            // Sécurité sup pour les bords
             const safeX = Math.max(0, Math.min(pixelX, image.naturalWidth - 1));
             const safeY = Math.max(0, Math.min(pixelY, image.naturalHeight - 1));
             const pixelData = ctx.getImageData(safeX, safeY, 1, 1).data;
@@ -103,29 +105,23 @@ export function useImagePicker(options: UseImagePickerOptions = {}) {
         onDrag: ({ last, event, offset: [x, y], touches, pinching, cancel }) => {
             if (event.cancelable) event.preventDefault();
 
-            // S'assurer qu'on utilise le nombre de doigts réel
             const realTouches = (event as TouchEvent).touches ? (event as TouchEvent).touches.length : touches;
 
-            // CAS 1 : PAN/ZOOM (2 doigts OU pinch OU !isPipetteMode)
-            // Si on n'est PAS en mode pipette, le drag à 1 doigt est un PAN.
             if (realTouches > 1 || pinching || !isPipetteMode) {
                 if (loupe) setLoupe(null);
-                // Si on était en mode pipette et qu'on a mis 2 doigts, on annule l'action actuelle
                 if (isPipetteMode && realTouches > 1) cancel();
 
                 setTransform(t => ({ ...t, x, y }));
                 return;
             }
 
-            // CAS 2 : LOUPE (1 doigt ET isPipetteMode)
             if (isPipetteMode && realTouches === 1) {
                 // @ts-ignore
                 const clientX = event.changedTouches ? event.changedTouches[0].clientX : event.clientX;
                 // @ts-ignore
                 const clientY = event.changedTouches ? event.changedTouches[0].clientY : event.clientY;
 
-                // CRITIQUE : on vise au dessus du doigt pour que la loupe soit la source
-                const PICK_OFFSET = 120; // Offset vertical pour dégager le doigt
+                const PICK_OFFSET = 120;
                 const targetY = clientY - PICK_OFFSET;
 
                 const color = getPixelColor(clientX, targetY);
@@ -136,19 +132,20 @@ export function useImagePicker(options: UseImagePickerOptions = {}) {
                         color
                     });
 
-                    // Feedback immédiat
                     setPickedColor(color);
-                    const matches = findTopMatches(color, 6);
+                    const matches = findTopMatches(color, 6, {
+                        ownedPencilsIds,
+                        prioritizeOwned: true
+                    });
                     setMatchResult(matches.length > 0 ? matches[0] : null);
                     setAlternatives(matches.slice(1));
                 } else {
-                    // Si on vise en dehors de l'image, on met à jour la position mais sans couleur
                     setLoupe(prev => prev ? { ...prev, x: clientX, y: targetY } : null);
                 }
 
                 if (last) {
                     setLoupe(null);
-                    setIsPipetteMode(false); // On quitte le mode pipette une fois la couleur figée
+                    setIsPipetteMode(false);
                 }
             }
         },
@@ -160,7 +157,7 @@ export function useImagePicker(options: UseImagePickerOptions = {}) {
     }, {
         drag: {
             from: () => [transform.x, transform.y],
-            delay: 150, // Anti-conflit
+            delay: 150,
             filterTaps: true,
         },
         pinch: {
@@ -188,13 +185,11 @@ export function useImagePicker(options: UseImagePickerOptions = {}) {
         bindGestures: bind,
         refs: { canvasRef, containerRef, imageRef },
         onImageLoad,
-        // New Exports
         isPipetteMode,
         togglePipetteMode: () => setIsPipetteMode(prev => !prev),
         setPipetteMode: setIsPipetteMode,
         resetView: () => {
             setTransform({ x: 0, y: 0, scale: 1 });
-            // setPipetteMode(false); // Optionnel
         }
     };
 }

@@ -14,6 +14,7 @@ export interface MatchResult {
     pencil: Pencil;
     distance: number; // Delta E (0 = identique, > 100 = très différent)
     confidence: number; // 0-100%
+    isOwned?: boolean;
 }
 
 /**
@@ -21,10 +22,11 @@ export interface MatchResult {
  */
 export function hexToRgb(hex: string): { r: number, g: number, b: number } {
     const c = parse(hex) as Rgb;
+    if (!c) return { r: 0, g: 0, b: 0 };
     return {
-        r: Math.round(c.r * 255),
-        g: Math.round(c.g * 255),
-        b: Math.round(c.b * 255)
+        r: Math.round((c.r || 0) * 255),
+        g: Math.round((c.g || 0) * 255),
+        b: Math.round((c.b || 0) * 255)
     };
 }
 
@@ -36,40 +38,54 @@ export function findTopMatches(
     limit: number = 5,
     options: {
         allowedBrands?: PencilBrand[],
-        ownedPencilsIds?: string[]
+        ownedPencilsIds?: string[],
+        prioritizeOwned?: boolean
     } = {}
 ): MatchResult[] {
     const targetColor = parse(targetHex);
     if (!targetColor) return [];
 
-    const { allowedBrands, ownedPencilsIds } = options;
+    const { allowedBrands, ownedPencilsIds, prioritizeOwned } = options;
 
-    // Filtrer les candidats
-    const candidates = (pencilsData as Pencil[]).filter(p => {
+    // 1. Obtenir tous les candidats possibles
+    const allCandidates = (pencilsData as Pencil[]).filter(p => {
         if (allowedBrands && allowedBrands.length > 0 && !allowedBrands.includes(p.brand)) {
-            return false;
-        }
-        if (ownedPencilsIds && !ownedPencilsIds.includes(getPencilId(p))) {
             return false;
         }
         return true;
     });
 
-    // Calculer les distances
-    const results: MatchResult[] = candidates.map(pencil => {
+    // 2. Calculer les distances pour tous
+    const allResults: MatchResult[] = allCandidates.map(pencil => {
         const pencilColor = parse(pencil.hex);
         const distance = pencilColor ? deltaE(targetColor, pencilColor) : Infinity;
+        const id = getPencilId(pencil);
         return {
             pencil,
             distance,
-            confidence: calculateConfidence(distance)
+            confidence: calculateConfidence(distance),
+            isOwned: ownedPencilsIds ? ownedPencilsIds.includes(id) : false
         };
     });
 
-    // Trier par distance et limiter
-    return results
-        .sort((a, b) => a.distance - b.distance)
-        .slice(0, limit);
+    // 3. Trier par distance
+    allResults.sort((a, b) => a.distance - b.distance);
+
+    // 4. Priorisation de la collection
+    if (prioritizeOwned && ownedPencilsIds && ownedPencilsIds.length > 0) {
+        const ownedResults = allResults.filter(r => r.isOwned);
+        const bestOwned = ownedResults[0];
+        const absoluteBest = allResults[0];
+
+        // Seuil d'acceptabilité pour un crayon possédé (Delta E < 10)
+        // Si le meilleur possédé est "correct", on le met en premier
+        if (bestOwned && bestOwned !== absoluteBest && bestOwned.distance < 10) {
+            const others = allResults.filter(r => r !== bestOwned);
+            return [bestOwned, ...others].slice(0, limit);
+        }
+    }
+
+    return allResults.slice(0, limit);
 }
 
 /**

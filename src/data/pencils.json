@@ -1,896 +1,5 @@
 [
     {
-        "id": "PC938",
-        "brand": "Prismacolor Premier",
-        "name": "White",
-        "hex": "#FFFFFF",
-        "rgb": {
-            "r": 255,
-            "g": 255,
-            "b": 255
-        }
-    },
-    {
-        "id": "PC914",
-        "brand": "Prismacolor Premier",
-        "name": "Cream",
-        "hex": "#F5EBC1",
-        "rgb": {
-            "r": 245,
-            "g": 235,
-            "b": 193
-        }
-    },
-    {
-        "id": "PC1084",
-        "brand": "Prismacolor Premier",
-        "name": "Ginger Root",
-        "hex": "#E3C9A6",
-        "rgb": {
-            "r": 227,
-            "g": 201,
-            "b": 166
-        }
-    },
-    {
-        "id": "PC1068",
-        "brand": "Prismacolor Premier",
-        "name": "French Grey 10%",
-        "hex": "#CBB8A8",
-        "rgb": {
-            "r": 203,
-            "g": 184,
-            "b": 168
-        }
-    },
-    {
-        "id": "PC1069",
-        "brand": "Prismacolor Premier",
-        "name": "French Grey 20%",
-        "hex": "#BDB1A5",
-        "rgb": {
-            "r": 189,
-            "g": 177,
-            "b": 165
-        }
-    },
-    {
-        "id": "PC1070",
-        "brand": "Prismacolor Premier",
-        "name": "French Grey 30%",
-        "hex": "#AFA398",
-        "rgb": {
-            "r": 175,
-            "g": 163,
-            "b": 152
-        }
-    },
-    {
-        "id": "PC1072",
-        "brand": "Prismacolor Premier",
-        "name": "French Grey 50%",
-        "hex": "#928980",
-        "rgb": {
-            "r": 146,
-            "g": 137,
-            "b": 128
-        }
-    },
-    {
-        "id": "PC1074",
-        "brand": "Prismacolor Premier",
-        "name": "French Grey 70%",
-        "hex": "#767069",
-        "rgb": {
-            "r": 118,
-            "g": 112,
-            "b": 105
-        }
-    },
-    {
-        "id": "PC1076",
-        "brand": "Prismacolor Premier",
-        "name": "French Grey 90%",
-        "hex": "#534F4C",
-        "rgb": {
-            "r": 83,
-            "g": 79,
-            "b": 76
-        }
-    },
-    {
-        "id": "PC1050",
-        "brand": "Prismacolor Premier",
-        "name": "Warm Grey 10%",
-        "hex": "#D3CEC9",
-        "rgb": {
-            "r": 211,
-            "g": 206,
-            "b": 201
-        }
-    },
-    {
-        "id": "PC1051",
-        "brand": "Prismacolor Premier",
-        "name": "Warm Grey 20%",
-        "hex": "#C5BFBA",
-        "rgb": {
-            "r": 197,
-            "g": 191,
-            "b": 186
-        }
-    },
-    {
-        "id": "PC1052",
-        "brand": "Prismacolor Premier",
-        "name": "Warm Grey 30%",
-        "hex": "#B1ABA6",
-        "rgb": {
-            "r": 177,
-            "g": 171,
-            "b": 166
-        }
-    },
-    {
-        "id": "PC1054",
-        "brand": "Prismacolor Premier",
-        "name": "Warm Grey 50%",
-        "hex": "#938C87",
-        "rgb": {
-            "r": 147,
-            "g": 140,
-            "b": 135
-        }
-    },
-    {
-        "id": "PC1056",
-        "brand": "Prismacolor Premier",
-        "name": "Warm Grey 70%",
-        "hex": "#726D6A",
-        "rgb": {
-            "r": 114,
-            "g": 109,
-            "b": 106
-        }
-    },
-    {
-        "id": "PC1058",
-        "brand": "Prismacolor Premier",
-        "name": "Warm Grey 90%",
-        "hex": "#504C49",
-        "rgb": {
-            "r": 80,
-            "g": 76,
-            "b": 73
-        }
-    },
-    {
-        "id": "PC1059",
-        "brand": "Prismacolor Premier",
-        "name": "Cool Grey 10%",
-        "hex": "#CFD2D3",
-        "rgb": {
-            "r": 207,
-            "g": 210,
-            "b": 211
-        }
-    },
-    {
-        "id": "PC1060",
-        "brand": "Prismacolor Premier",
-        "name": "Cool Grey 20%",
-        "hex": "#BFC3C4",
-        "rgb": {
-            "r": 191,
-            "g": 195,
-            "b": 196
-        }
-    },
-    {
-        "id": "PC1061",
-        "brand": "Prismacolor Premier",
-        "name": "Cool Grey 30%",
-        "hex": "#ABAFB1",
-        "rgb": {
-            "r": 171,
-            "g": 175,
-            "b": 177
-        }
-    },
-    {
-        "id": "PC1063",
-        "brand": "Prismacolor Premier",
-        "name": "Cool Grey 50%",
-        "hex": "#8D9294",
-        "rgb": {
-            "r": 141,
-            "g": 146,
-            "b": 148
-        }
-    },
-    {
-        "id": "PC1065",
-        "brand": "Prismacolor Premier",
-        "name": "Cool Grey 70%",
-        "hex": "#6D7173",
-        "rgb": {
-            "r": 109,
-            "g": 113,
-            "b": 115
-        }
-    },
-    {
-        "id": "PC1067",
-        "brand": "Prismacolor Premier",
-        "name": "Cool Grey 90%",
-        "hex": "#4C4E50",
-        "rgb": {
-            "r": 76,
-            "g": 78,
-            "b": 80
-        }
-    },
-    {
-        "id": "PC935",
-        "brand": "Prismacolor Premier",
-        "name": "Black",
-        "hex": "#000000",
-        "rgb": {
-            "r": 0,
-            "g": 0,
-            "b": 0
-        }
-    },
-    {
-        "id": "PC1011",
-        "brand": "Prismacolor Premier",
-        "name": "Deco Yellow",
-        "hex": "#F6D258",
-        "rgb": {
-            "r": 246,
-            "g": 210,
-            "b": 88
-        }
-    },
-    {
-        "id": "PC916",
-        "brand": "Prismacolor Premier",
-        "name": "Canary Yellow",
-        "hex": "#F6D000",
-        "rgb": {
-            "r": 246,
-            "g": 208,
-            "b": 0
-        }
-    },
-    {
-        "id": "PC1002",
-        "brand": "Prismacolor Premier",
-        "name": "Yellowed Orange",
-        "hex": "#EBBA00",
-        "rgb": {
-            "r": 235,
-            "g": 186,
-            "b": 0
-        }
-    },
-    {
-        "id": "PC1034",
-        "brand": "Prismacolor Premier",
-        "name": "Goldenrod",
-        "hex": "#DAA000",
-        "rgb": {
-            "r": 218,
-            "g": 160,
-            "b": 0
-        }
-    },
-    {
-        "id": "PC942",
-        "brand": "Prismacolor Premier",
-        "name": "Yellow Ochre",
-        "hex": "#C99500",
-        "rgb": {
-            "r": 201,
-            "g": 149,
-            "b": 0
-        }
-    },
-    {
-        "id": "PC1003",
-        "brand": "Prismacolor Premier",
-        "name": "Spanish Orange",
-        "hex": "#E08A27",
-        "rgb": {
-            "r": 224,
-            "g": 138,
-            "b": 39
-        }
-    },
-    {
-        "id": "PC918",
-        "brand": "Prismacolor Premier",
-        "name": "Orange",
-        "hex": "#E77300",
-        "rgb": {
-            "r": 231,
-            "g": 115,
-            "b": 0
-        }
-    },
-    {
-        "id": "PC921",
-        "brand": "Prismacolor Premier",
-        "name": "Pale Vermilion",
-        "hex": "#E15C13",
-        "rgb": {
-            "r": 225,
-            "g": 92,
-            "b": 19
-        }
-    },
-    {
-        "id": "PC922",
-        "brand": "Prismacolor Premier",
-        "name": "Poppy Red",
-        "hex": "#DA2C2C",
-        "rgb": {
-            "r": 218,
-            "g": 44,
-            "b": 44
-        }
-    },
-    {
-        "id": "PC924",
-        "brand": "Prismacolor Premier",
-        "name": "Crimson Red",
-        "hex": "#BD0029",
-        "rgb": {
-            "r": 189,
-            "g": 0,
-            "b": 41
-        }
-    },
-    {
-        "id": "PC926",
-        "brand": "Prismacolor Premier",
-        "name": "Carmine Red",
-        "hex": "#A31A38",
-        "rgb": {
-            "r": 163,
-            "g": 26,
-            "b": 56
-        }
-    },
-    {
-        "id": "PC929",
-        "brand": "Prismacolor Premier",
-        "name": "Pink",
-        "hex": "#E48397",
-        "rgb": {
-            "r": 228,
-            "g": 131,
-            "b": 151
-        }
-    },
-    {
-        "id": "PC939",
-        "brand": "Prismacolor Premier",
-        "name": "Peach",
-        "hex": "#E4A786",
-        "rgb": {
-            "r": 228,
-            "g": 167,
-            "b": 134
-        }
-    },
-    {
-        "id": "PC1001",
-        "brand": "Prismacolor Premier",
-        "name": "Salmon Pink",
-        "hex": "#F1A88A",
-        "rgb": {
-            "r": 241,
-            "g": 168,
-            "b": 138
-        }
-    },
-    {
-        "id": "PC928",
-        "brand": "Prismacolor Premier",
-        "name": "Blush Pink",
-        "hex": "#DB897D",
-        "rgb": {
-            "r": 219,
-            "g": 137,
-            "b": 125
-        }
-    },
-    {
-        "id": "PC927",
-        "brand": "Prismacolor Premier",
-        "name": "Light Peach",
-        "hex": "#F1C2AA",
-        "rgb": {
-            "r": 241,
-            "g": 194,
-            "b": 170
-        }
-    },
-    {
-        "id": "PC997",
-        "brand": "Prismacolor Premier",
-        "name": "Beige",
-        "hex": "#D8B493",
-        "rgb": {
-            "r": 216,
-            "g": 180,
-            "b": 147
-        }
-    },
-    {
-        "id": "PC930",
-        "brand": "Prismacolor Premier",
-        "name": "Magenta",
-        "hex": "#9D084B",
-        "rgb": {
-            "r": 157,
-            "g": 8,
-            "b": 75
-        }
-    },
-    {
-        "id": "PC931",
-        "brand": "Prismacolor Premier",
-        "name": "Dark Purple",
-        "hex": "#4C3B7B",
-        "rgb": {
-            "r": 76,
-            "g": 59,
-            "b": 123
-        }
-    },
-    {
-        "id": "PC932",
-        "brand": "Prismacolor Premier",
-        "name": "Violet",
-        "hex": "#34308D",
-        "rgb": {
-            "r": 52,
-            "g": 48,
-            "b": 141
-        }
-    },
-    {
-        "id": "PC934",
-        "brand": "Prismacolor Premier",
-        "name": "Lavender",
-        "hex": "#898DC4",
-        "rgb": {
-            "r": 137,
-            "g": 141,
-            "b": 196
-        }
-    },
-    {
-        "id": "PC956",
-        "brand": "Prismacolor Premier",
-        "name": "Lilac",
-        "hex": "#BC9CC2",
-        "rgb": {
-            "r": 188,
-            "g": 156,
-            "b": 194
-        }
-    },
-    {
-        "id": "PC1008",
-        "brand": "Prismacolor Premier",
-        "name": "Parma Violet",
-        "hex": "#7A70B6",
-        "rgb": {
-            "r": 122,
-            "g": 112,
-            "b": 182
-        }
-    },
-    {
-        "id": "PC1026",
-        "brand": "Prismacolor Premier",
-        "name": "Greyed Lavender",
-        "hex": "#948792",
-        "rgb": {
-            "r": 148,
-            "g": 135,
-            "b": 146
-        }
-    },
-    {
-        "id": "PC936",
-        "brand": "Prismacolor Premier",
-        "name": "Slate Grey",
-        "hex": "#58626C",
-        "rgb": {
-            "r": 88,
-            "g": 98,
-            "b": 108
-        }
-    },
-    {
-        "id": "PC901",
-        "brand": "Prismacolor Premier",
-        "name": "Indigo Blue",
-        "hex": "#192850",
-        "rgb": {
-            "r": 25,
-            "g": 40,
-            "b": 80
-        }
-    },
-    {
-        "id": "PC902",
-        "brand": "Prismacolor Premier",
-        "name": "Ultramarine",
-        "hex": "#193566",
-        "rgb": {
-            "r": 25,
-            "g": 53,
-            "b": 102
-        }
-    },
-    {
-        "id": "PC903",
-        "brand": "Prismacolor Premier",
-        "name": "True Blue",
-        "hex": "#195796",
-        "rgb": {
-            "r": 25,
-            "g": 87,
-            "b": 150
-        }
-    },
-    {
-        "id": "PC904",
-        "brand": "Prismacolor Premier",
-        "name": "Light Cerulean Blue",
-        "hex": "#76A6CB",
-        "rgb": {
-            "r": 118,
-            "g": 166,
-            "b": 203
-        }
-    },
-    {
-        "id": "PC1023",
-        "brand": "Prismacolor Premier",
-        "name": "Cloud Blue",
-        "hex": "#9BC4E2",
-        "rgb": {
-            "r": 155,
-            "g": 196,
-            "b": 226
-        }
-    },
-    {
-        "id": "PC1086",
-        "brand": "Prismacolor Premier",
-        "name": "Sky Blue Light",
-        "hex": "#A7C9D6",
-        "rgb": {
-            "r": 167,
-            "g": 201,
-            "b": 214
-        }
-    },
-    {
-        "id": "PC905",
-        "brand": "Prismacolor Premier",
-        "name": "Aquamarine",
-        "hex": "#50A6BD",
-        "rgb": {
-            "r": 80,
-            "g": 166,
-            "b": 189
-        }
-    },
-    {
-        "id": "PC992",
-        "brand": "Prismacolor Premier",
-        "name": "Light Aqua",
-        "hex": "#93D0D3",
-        "rgb": {
-            "r": 147,
-            "g": 208,
-            "b": 211
-        }
-    },
-    {
-        "id": "PC906",
-        "brand": "Prismacolor Premier",
-        "name": "Copenhagen Blue",
-        "hex": "#3E6990",
-        "rgb": {
-            "r": 62,
-            "g": 105,
-            "b": 144
-        }
-    },
-    {
-        "id": "PC1027",
-        "brand": "Prismacolor Premier",
-        "name": "Peacock Blue",
-        "hex": "#005E82",
-        "rgb": {
-            "r": 0,
-            "g": 94,
-            "b": 130
-        }
-    },
-    {
-        "id": "PC1040",
-        "brand": "Prismacolor Premier",
-        "name": "Electric Blue",
-        "hex": "#40E0D0",
-        "rgb": {
-            "r": 64,
-            "g": 224,
-            "b": 208
-        }
-    },
-    {
-        "id": "PC908",
-        "brand": "Prismacolor Premier",
-        "name": "Dark Green",
-        "hex": "#004732",
-        "rgb": {
-            "r": 0,
-            "g": 71,
-            "b": 50
-        }
-    },
-    {
-        "id": "PC909",
-        "brand": "Prismacolor Premier",
-        "name": "Grass Green",
-        "hex": "#36632B",
-        "rgb": {
-            "r": 54,
-            "g": 99,
-            "b": 43
-        }
-    },
-    {
-        "id": "PC910",
-        "brand": "Prismacolor Premier",
-        "name": "True Green",
-        "hex": "#137E3E",
-        "rgb": {
-            "r": 19,
-            "g": 126,
-            "b": 62
-        }
-    },
-    {
-        "id": "PC911",
-        "brand": "Prismacolor Premier",
-        "name": "Olive Green",
-        "hex": "#3C4918",
-        "rgb": {
-            "r": 60,
-            "g": 73,
-            "b": 24
-        }
-    },
-    {
-        "id": "PC912",
-        "brand": "Prismacolor Premier",
-        "name": "Apple Green",
-        "hex": "#84BA24",
-        "rgb": {
-            "r": 132,
-            "g": 186,
-            "b": 36
-        }
-    },
-    {
-        "id": "PC913",
-        "brand": "Prismacolor Premier",
-        "name": "Spring Green",
-        "hex": "#89C579",
-        "rgb": {
-            "r": 137,
-            "g": 197,
-            "b": 121
-        }
-    },
-    {
-        "id": "PC989",
-        "brand": "Prismacolor Premier",
-        "name": "Chartreuse",
-        "hex": "#D1D600",
-        "rgb": {
-            "r": 209,
-            "g": 214,
-            "b": 0
-        }
-    },
-    {
-        "id": "PC1005",
-        "brand": "Prismacolor Premier",
-        "name": "Lime Peel",
-        "hex": "#A7C400",
-        "rgb": {
-            "r": 167,
-            "g": 196,
-            "b": 0
-        }
-    },
-    {
-        "id": "PC1006",
-        "brand": "Prismacolor Premier",
-        "name": "Parrot Green",
-        "hex": "#00A170",
-        "rgb": {
-            "r": 0,
-            "g": 161,
-            "b": 112
-        }
-    },
-    {
-        "id": "PC1020",
-        "brand": "Prismacolor Premier",
-        "name": "Celadon Green",
-        "hex": "#93AA8C",
-        "rgb": {
-            "r": 147,
-            "g": 170,
-            "b": 140
-        }
-    },
-    {
-        "id": "PC1021",
-        "brand": "Prismacolor Premier",
-        "name": "Jade Green",
-        "hex": "#509E83",
-        "rgb": {
-            "r": 80,
-            "g": 158,
-            "b": 131
-        }
-    },
-    {
-        "id": "PC1089",
-        "brand": "Prismacolor Premier",
-        "name": "Pale Sage",
-        "hex": "#B1C7A9",
-        "rgb": {
-            "r": 177,
-            "g": 199,
-            "b": 169
-        }
-    },
-    {
-        "id": "PC109",
-        "brand": "Prismacolor Premier",
-        "name": "Prussian Green",
-        "hex": "#004732",
-        "rgb": {
-            "r": 0,
-            "g": 71,
-            "b": 50
-        }
-    },
-    {
-        "id": "PC1096",
-        "brand": "Prismacolor Premier",
-        "name": "Kelly Green",
-        "hex": "#00833C",
-        "rgb": {
-            "r": 0,
-            "g": 131,
-            "b": 60
-        }
-    },
-    {
-        "id": "PC941",
-        "brand": "Prismacolor Premier",
-        "name": "Light Umber",
-        "hex": "#7d6251",
-        "rgb": {
-            "r": 125,
-            "g": 98,
-            "b": 81
-        }
-    },
-    {
-        "id": "PC943",
-        "brand": "Prismacolor Premier",
-        "name": "Burnt Ochre",
-        "hex": "#C26831",
-        "rgb": {
-            "r": 194,
-            "g": 104,
-            "b": 49
-        }
-    },
-    {
-        "id": "PC944",
-        "brand": "Prismacolor Premier",
-        "name": "Terra Cotta",
-        "hex": "#944422",
-        "rgb": {
-            "r": 148,
-            "g": 68,
-            "b": 34
-        }
-    },
-    {
-        "id": "PC945",
-        "brand": "Prismacolor Premier",
-        "name": "Sienna Brown",
-        "hex": "#8C3F2B",
-        "rgb": {
-            "r": 140,
-            "g": 63,
-            "b": 43
-        }
-    },
-    {
-        "id": "PC946",
-        "brand": "Prismacolor Premier",
-        "name": "Dark Brown",
-        "hex": "#53372B",
-        "rgb": {
-            "r": 83,
-            "g": 55,
-            "b": 43
-        }
-    },
-    {
-        "id": "PC947",
-        "brand": "Prismacolor Premier",
-        "name": "Dark Umber",
-        "hex": "#3E2E28",
-        "rgb": {
-            "r": 62,
-            "g": 46,
-            "b": 40
-        }
-    },
-    {
-        "id": "PC948",
-        "brand": "Prismacolor Premier",
-        "name": "Sepia",
-        "hex": "#3E3B39",
-        "rgb": {
-            "r": 62,
-            "g": 59,
-            "b": 57
-        }
-    },
-    {
-        "id": "PC937",
-        "brand": "Prismacolor Premier",
-        "name": "Tuscan Red",
-        "hex": "#763339",
-        "rgb": {
-            "r": 118,
-            "g": 51,
-            "b": 57
-        }
-    },
-    {
-        "id": "PC938",
-        "brand": "Prismacolor Premier",
-        "name": "White",
-        "hex": "#FFFFFF",
-        "rgb": {
-            "r": 255,
-            "g": 255,
-            "b": 255
-        }
-    },
-    {
         "id": "101",
         "brand": "Faber-Castell Polychromos",
         "name": "White",
@@ -2120,6 +1229,446 @@
             "r": 169,
             "g": 107,
             "b": 80
+        }
+    },
+    {
+        "id": "1",
+        "brand": "BRUTFUNER",
+        "name": "White",
+        "hex": "#FFFFFF",
+        "rgb": {
+            "r": 255,
+            "g": 255,
+            "b": 255
+        }
+    },
+    {
+        "id": "2",
+        "brand": "BRUTFUNER",
+        "name": "Lemon Yellow",
+        "hex": "#FFFF00",
+        "rgb": {
+            "r": 255,
+            "g": 255,
+            "b": 0
+        }
+    },
+    {
+        "id": "3",
+        "brand": "BRUTFUNER",
+        "name": "Gold",
+        "hex": "#FFD700",
+        "rgb": {
+            "r": 255,
+            "g": 215,
+            "b": 0
+        }
+    },
+    {
+        "id": "4",
+        "brand": "BRUTFUNER",
+        "name": "Orange",
+        "hex": "#FFA500",
+        "rgb": {
+            "r": 255,
+            "g": 165,
+            "b": 0
+        }
+    },
+    {
+        "id": "5",
+        "brand": "BRUTFUNER",
+        "name": "Orange Red",
+        "hex": "#FF4500",
+        "rgb": {
+            "r": 255,
+            "g": 69,
+            "b": 0
+        }
+    },
+    {
+        "id": "6",
+        "brand": "BRUTFUNER",
+        "name": "Red",
+        "hex": "#FF0000",
+        "rgb": {
+            "r": 255,
+            "g": 0,
+            "b": 0
+        }
+    },
+    {
+        "id": "7",
+        "brand": "BRUTFUNER",
+        "name": "Crimson",
+        "hex": "#DC143C",
+        "rgb": {
+            "r": 220,
+            "g": 20,
+            "b": 60
+        }
+    },
+    {
+        "id": "8",
+        "brand": "BRUTFUNER",
+        "name": "Hot Pink",
+        "hex": "#FF69B4",
+        "rgb": {
+            "r": 255,
+            "g": 105,
+            "b": 180
+        }
+    },
+    {
+        "id": "9",
+        "brand": "BRUTFUNER",
+        "name": "Pink",
+        "hex": "#FFC0CB",
+        "rgb": {
+            "r": 255,
+            "g": 192,
+            "b": 203
+        }
+    },
+    {
+        "id": "10",
+        "brand": "BRUTFUNER",
+        "name": "Purple",
+        "hex": "#800080",
+        "rgb": {
+            "r": 128,
+            "g": 0,
+            "b": 128
+        }
+    },
+    {
+        "id": "11",
+        "brand": "BRUTFUNER",
+        "name": "Indigo",
+        "hex": "#4B0082",
+        "rgb": {
+            "r": 75,
+            "g": 0,
+            "b": 130
+        }
+    },
+    {
+        "id": "12",
+        "brand": "BRUTFUNER",
+        "name": "Blue",
+        "hex": "#0000FF",
+        "rgb": {
+            "r": 0,
+            "g": 0,
+            "b": 255
+        }
+    },
+    {
+        "id": "13",
+        "brand": "BRUTFUNER",
+        "name": "Sky Blue",
+        "hex": "#87CEEB",
+        "rgb": {
+            "r": 135,
+            "g": 206,
+            "b": 235
+        }
+    },
+    {
+        "id": "14",
+        "brand": "BRUTFUNER",
+        "name": "Teal",
+        "hex": "#008080",
+        "rgb": {
+            "r": 0,
+            "g": 128,
+            "b": 128
+        }
+    },
+    {
+        "id": "15",
+        "brand": "BRUTFUNER",
+        "name": "Green",
+        "hex": "#008000",
+        "rgb": {
+            "r": 0,
+            "g": 128,
+            "b": 0
+        }
+    },
+    {
+        "id": "16",
+        "brand": "BRUTFUNER",
+        "name": "Lime",
+        "hex": "#00FF00",
+        "rgb": {
+            "r": 0,
+            "g": 255,
+            "b": 0
+        }
+    },
+    {
+        "id": "17",
+        "brand": "BRUTFUNER",
+        "name": "Brown",
+        "hex": "#A52A2A",
+        "rgb": {
+            "r": 165,
+            "g": 42,
+            "b": 42
+        }
+    },
+    {
+        "id": "18",
+        "brand": "BRUTFUNER",
+        "name": "Black",
+        "hex": "#000000",
+        "rgb": {
+            "r": 0,
+            "g": 0,
+            "b": 0
+        }
+    },
+    {
+        "id": "19",
+        "brand": "BRUTFUNER",
+        "name": "Grey",
+        "hex": "#808080",
+        "rgb": {
+            "r": 128,
+            "g": 128,
+            "b": 128
+        }
+    },
+    {
+        "id": "20",
+        "brand": "BRUTFUNER",
+        "name": "Silver",
+        "hex": "#C0C0C0",
+        "rgb": {
+            "r": 192,
+            "g": 192,
+            "b": 192
+        }
+    },
+    {
+        "id": "21",
+        "brand": "BRUTFUNER",
+        "name": "Beige",
+        "hex": "#F5F5DC",
+        "rgb": {
+            "r": 245,
+            "g": 245,
+            "b": 220
+        }
+    },
+    {
+        "id": "22",
+        "brand": "BRUTFUNER",
+        "name": "Moccasin",
+        "hex": "#FFE4B5",
+        "rgb": {
+            "r": 255,
+            "g": 228,
+            "b": 181
+        }
+    },
+    {
+        "id": "23",
+        "brand": "BRUTFUNER",
+        "name": "Peach Puff",
+        "hex": "#FFDAB9",
+        "rgb": {
+            "r": 255,
+            "g": 218,
+            "b": 185
+        }
+    },
+    {
+        "id": "24",
+        "brand": "BRUTFUNER",
+        "name": "Tan",
+        "hex": "#D2B48C",
+        "rgb": {
+            "r": 210,
+            "g": 180,
+            "b": 140
+        }
+    },
+    {
+        "id": "25",
+        "brand": "BRUTFUNER",
+        "name": "BurlyWood",
+        "hex": "#DEB887",
+        "rgb": {
+            "r": 222,
+            "g": 184,
+            "b": 135
+        }
+    },
+    {
+        "id": "26",
+        "brand": "BRUTFUNER",
+        "name": "Saddle Brown",
+        "hex": "#8B4513",
+        "rgb": {
+            "r": 139,
+            "g": 69,
+            "b": 19
+        }
+    },
+    {
+        "id": "27",
+        "brand": "BRUTFUNER",
+        "name": "Sienna",
+        "hex": "#A0522D",
+        "rgb": {
+            "r": 160,
+            "g": 82,
+            "b": 45
+        }
+    },
+    {
+        "id": "28",
+        "brand": "BRUTFUNER",
+        "name": "Chocolate",
+        "hex": "#D2691E",
+        "rgb": {
+            "r": 210,
+            "g": 105,
+            "b": 30
+        }
+    },
+    {
+        "id": "29",
+        "brand": "BRUTFUNER",
+        "name": "Peru",
+        "hex": "#CD853F",
+        "rgb": {
+            "r": 205,
+            "g": 133,
+            "b": 63
+        }
+    },
+    {
+        "id": "30",
+        "brand": "BRUTFUNER",
+        "name": "Sandy Brown",
+        "hex": "#F4A460",
+        "rgb": {
+            "r": 244,
+            "g": 164,
+            "b": 96
+        }
+    },
+    {
+        "id": "31",
+        "brand": "BRUTFUNER",
+        "name": "Navajo White",
+        "hex": "#FFDEAD",
+        "rgb": {
+            "r": 255,
+            "g": 222,
+            "b": 173
+        }
+    },
+    {
+        "id": "32",
+        "brand": "BRUTFUNER",
+        "name": "Linen",
+        "hex": "#FAF0E6",
+        "rgb": {
+            "r": 250,
+            "g": 240,
+            "b": 230
+        }
+    },
+    {
+        "id": "33",
+        "brand": "BRUTFUNER",
+        "name": "Antique White",
+        "hex": "#FAEBD7",
+        "rgb": {
+            "r": 250,
+            "g": 235,
+            "b": 215
+        }
+    },
+    {
+        "id": "34",
+        "brand": "BRUTFUNER",
+        "name": "Bisque",
+        "hex": "#FFE4C4",
+        "rgb": {
+            "r": 255,
+            "g": 228,
+            "b": 196
+        }
+    },
+    {
+        "id": "35",
+        "brand": "BRUTFUNER",
+        "name": "Misty Rose",
+        "hex": "#FFE4E1",
+        "rgb": {
+            "r": 255,
+            "g": 228,
+            "b": 225
+        }
+    },
+    {
+        "id": "36",
+        "brand": "BRUTFUNER",
+        "name": "Lavender Blush",
+        "hex": "#FFF0F5",
+        "rgb": {
+            "r": 255,
+            "g": 240,
+            "b": 245
+        }
+    },
+    {
+        "id": "37",
+        "brand": "BRUTFUNER",
+        "name": "Honeydew",
+        "hex": "#F0FFF0",
+        "rgb": {
+            "r": 240,
+            "g": 255,
+            "b": 240
+        }
+    },
+    {
+        "id": "38",
+        "brand": "BRUTFUNER",
+        "name": "Mint Cream",
+        "hex": "#F5FFFA",
+        "rgb": {
+            "r": 245,
+            "g": 255,
+            "b": 250
+        }
+    },
+    {
+        "id": "39",
+        "brand": "BRUTFUNER",
+        "name": "Azure",
+        "hex": "#F0FFFF",
+        "rgb": {
+            "r": 240,
+            "g": 255,
+            "b": 255
+        }
+    },
+    {
+        "id": "40",
+        "brand": "BRUTFUNER",
+        "name": "Alice Blue",
+        "hex": "#F0F8FF",
+        "rgb": {
+            "r": 240,
+            "g": 248,
+            "b": 255
         }
     }
 ]

@@ -1,5 +1,4 @@
 export type PencilBrand =
-    | 'Prismacolor Premier'
     | 'Faber-Castell Polychromos'
     | "Caran d'Ache Luminance"
     | "Caran d'Ache Pablo"
