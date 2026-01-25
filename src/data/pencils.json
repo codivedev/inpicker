@@ -1436,54 +1436,6 @@
     },
     {
         "id": "030",
-        "brand": "Sap Green",
-        "hex": "#480607",
-        "rgb": { "r": 72, "g": 6, "b": 7 }
-    }
-        "brand": "BRUTFUNER",
-        "name": "Sandy Brown",
-        "hex": "#F4A460",
-        "rgb": {
-            "r": 244,
-            "g": 164,
-            "b": 96
-        }
-    },
-    {
-        "id": "31",
-        "brand": "BRUTFUNER",
-        "name": "Navajo White",
-        "hex": "#FFDEAD",
-        "rgb": {
-            "r": 255,
-            "g": 222,
-            "b": 173
-        }
-    },
-    {
-        "id": "32",
-        "brand": "BRUTFUNER",
-        "name": "Linen",
-        "hex": "#FAF0E6",
-        "rgb": {
-            "r": 250,
-            "g": 240,
-            "b": 230
-        }
-    },
-    {
-        "id": "33",
-        "brand": "BRUTFUNER",
-        "name": "Antique White",
-        "hex": "#FAEBD7",
-        "rgb": {
-            "r": 250,
-            "g": 235,
-            "b": 215
-        }
-    },
-    {
-        "id": "030",
         "brand": "BRUTFUNER",
         "name": "Sap Green",
         "hex": "#480607",
@@ -1558,72 +1510,6 @@
         "name": "Dark Grey",
         "hex": "#A9A9A9",
         "rgb": { "r": 169, "g": 169, "b": 169 }
-    }
-],
-        "id": "35",
-        "brand": "BRUTFUNER",
-        "name": "Misty Rose",
-        "hex": "#FFE4E1",
-        "rgb": {
-            "r": 255,
-            "g": 228,
-            "b": 225
-        }
-    },
-    {
-        "id": "36",
-        "brand": "BRUTFUNER",
-        "name": "Lavender Blush",
-        "hex": "#FFF0F5",
-        "rgb": {
-            "r": 255,
-            "g": 240,
-            "b": 245
-        }
-    },
-    {
-        "id": "37",
-        "brand": "BRUTFUNER",
-        "name": "Honeydew",
-        "hex": "#F0FFF0",
-        "rgb": {
-            "r": 240,
-            "g": 255,
-            "b": 240
-        }
-    },
-    {
-        "id": "38",
-        "brand": "BRUTFUNER",
-        "name": "Mint Cream",
-        "hex": "#F5FFFA",
-        "rgb": {
-            "r": 245,
-            "g": 255,
-            "b": 250
-        }
-    },
-    {
-        "id": "39",
-        "brand": "BRUTFUNER",
-        "name": "Azure",
-        "hex": "#F0FFFF",
-        "rgb": {
-            "r": 240,
-            "g": 255,
-            "b": 255
-        }
-    },
-    {
-        "id": "40",
-        "brand": "BRUTFUNER",
-        "name": "Alice Blue",
-        "hex": "#F0F8FF",
-        "rgb": {
-            "r": 240,
-            "g": 248,
-            "b": 255
-        }
     },
     {
         "id": "001",
