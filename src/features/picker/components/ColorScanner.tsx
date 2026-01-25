@@ -4,7 +4,7 @@ import { useDrawings } from '@/features/drawings/hooks/useDrawings';
 import { cloudflareApi } from '@/lib/cloudflare-api';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Pipette, RotateCcw, Crosshair, Plus } from 'lucide-react';
+import { Pipette, RotateCcw, Plus } from 'lucide-react';
 import { useImagePicker } from '../hooks/useImagePicker';
 import { ColorResult } from './ColorResult';
 
@@ -346,13 +346,6 @@ export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
                             )}
                         </AnimatePresence>
 
-                        {/* Reticle for centered picking (Optional, but Loupe is better) */}
-                        <div className={cn(
-                            "absolute inset-0 z-10 pointer-events-none flex items-center justify-center transition-opacity duration-200",
-                            isPipetteMode ? "opacity-30" : "opacity-0"
-                        )}>
-                            <Crosshair className="text-white/50" size={32} />
-                        </div>
                         {/* LOUPE */}
                         <AnimatePresence>
                             {loupe && isPipetteMode && (
@@ -362,7 +355,7 @@ export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
                                     exit={{ scale: 0, opacity: 0 }}
                                     style={{
                                         left: loupe.x,
-                                        top: loupe.y - 80,
+                                        top: loupe.y,
                                     }}
                                     className="absolute z-50 pointer-events-none -translate-x-1/2 -translate-y-1/2"
                                 >
@@ -558,8 +551,8 @@ export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
                 )}
             </AnimatePresence>
 
-            {/* Footer / Confirm */}
-            {pickedColor && (
+            {/* Footer / Confirm - Only show if no match or manually hidden */}
+            {pickedColor && !matchResult && (
                 <div className="p-6 bg-black/80 backdrop-blur-md absolute bottom-0 left-0 right-0 pb-10 border-t border-white/10">
                     <div className="flex items-center justify-between gap-4">
                         <div className="flex items-center gap-3">
@@ -587,6 +580,7 @@ export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
                     match={matchResult}
                     alternatives={alternatives}
                     drawingId={activeDrawingId || undefined}
+                    onConfirm={confirmColor}
                 />
             )}
         </div>

@@ -14,11 +14,12 @@ interface ColorResultProps {
     match: MatchResult | null;
     alternatives: MatchResult[];
     drawingId?: number;
+    onConfirm?: () => void;
 }
 
 type ViewMode = 'summary' | 'alternatives' | 'details';
 
-export function ColorResult({ color, match, alternatives, drawingId }: ColorResultProps) {
+export function ColorResult({ color, match, alternatives, drawingId, onConfirm }: ColorResultProps) {
     const { isOwned, togglePencil } = useInventory();
     const { addPencilToDrawing } = useDrawings();
     const { addFavorite, removeFavorite, isFavorite } = useFavorites();
@@ -99,14 +100,25 @@ export function ColorResult({ color, match, alternatives, drawingId }: ColorResu
                         )}
 
                         {isCollapsed && (
-                                <div className="flex items-center gap-2 pl-1">
+                            <div className="flex items-center gap-2 pl-1 flex-1 min-w-0">
                                 <div
-                                    className="w-4 h-4 rounded-full border border-white/20"
+                                    className="w-4 h-4 rounded-full border border-white/20 flex-shrink-0"
                                     style={{ backgroundColor: color }}
                                 />
-                                <span className="text-xs font-bold truncate max-w-[100px]">
+                                <span className="text-xs font-bold truncate">
                                     {activeMatch.pencil.brand === 'BRUTFUNER' ? `B${activeMatch.pencil.id}` : activeMatch.pencil.name}
                                 </span>
+                                {onConfirm && (
+                                    <button 
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onConfirm();
+                                        }}
+                                        className="ml-auto p-1 bg-primary text-primary-foreground rounded-full"
+                                    >
+                                        <Check size={14} />
+                                    </button>
+                                )}
                             </div>
                         )}
 
@@ -295,6 +307,17 @@ export function ColorResult({ color, match, alternatives, drawingId }: ColorResu
                             {/* Boutons Actions Secondaires */}
                             {viewMode === 'summary' && (
                                 <div className="mt-4 pt-4 border-t border-border/50 flex items-center gap-3">
+                                    {/* Bouton Valider */}
+                                    {onConfirm && (
+                                        <button
+                                            onClick={onConfirm}
+                                            className="flex-1 py-3 bg-primary text-primary-foreground font-bold rounded-xl hover:bg-primary/90 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
+                                        >
+                                            <Check size={20} />
+                                            Valider
+                                        </button>
+                                    )}
+
                                     {/* Bouton Favoris */}
                                     <button
                                         onClick={toggleFavorite}

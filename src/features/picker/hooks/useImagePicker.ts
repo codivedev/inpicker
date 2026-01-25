@@ -130,8 +130,8 @@ export function useImagePicker(options: UseImagePickerOptions = {}) {
                 const PICK_OFFSET = 120; // Décalage pour voir au-dessus du doigt
                 const targetY = clientY - PICK_OFFSET;
 
-                // On pick la couleur SOUS le doigt (clientY), pas sous la loupe (targetY)
-                const color = getPixelColor(clientX, clientY);
+                // On pick la couleur SOUS la loupe (targetY), pas sous le doigt (clientY)
+                const color = getPixelColor(clientX, targetY);
                 if (color) {
                     setLoupe({
                         x: clientX,
