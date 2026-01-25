@@ -355,7 +355,7 @@ export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
                                     exit={{ scale: 0, opacity: 0 }}
                                     style={{
                                         left: loupe.x,
-                                        top: loupe.y,
+                                        top: loupe.y - 40, // On remonte encore un peu la bulle par rapport au point de pick
                                     }}
                                     className="absolute z-50 pointer-events-none -translate-x-1/2 -translate-y-1/2"
                                 >

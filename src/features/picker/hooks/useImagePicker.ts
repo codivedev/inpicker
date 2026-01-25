@@ -30,10 +30,13 @@ export function useImagePicker(options: UseImagePickerOptions = {}) {
     const containerRef = useRef<HTMLDivElement | null>(null);
     const imageRef = useRef<HTMLImageElement | null>(null);
 
-    const { ownedPencils } = useInventory();
+    const { ownedPencils, pencilsByBrand } = useInventory();
     const ownedPencilsIds = ownedPencils
         .filter(p => p.is_owned === 1)
         .map(p => p.id);
+
+    // Nouveau : Liste de tous les crayons connus (Catalogue + Custom)
+    const allPencils = Object.values(pencilsByBrand).flat();
 
     // Mettre à jour l'image si initialImage change
     useEffect(() => {
@@ -75,9 +78,7 @@ export function useImagePicker(options: UseImagePickerOptions = {}) {
 
         const rect = image.getBoundingClientRect();
 
-        // Calcul robuste basé sur le centre (Inspiré de ColorScanner)
-        const centerX = image.naturalWidth / 2;
-        const centerY = image.naturalHeight / 2;
+
 
         // Position par rapport au centre de l'élément transformé
         const domCenterX = rect.left + rect.width / 2;
@@ -86,17 +87,22 @@ export function useImagePicker(options: UseImagePickerOptions = {}) {
         const relativeToCenterX = clientX - domCenterX;
         const relativeToCenterY = clientY - domCenterY;
 
-        // On compense le scale et les transforms pour revenir aux coords natives
-        const unscaledX = relativeToCenterX / transform.scale;
-        const unscaledY = relativeToCenterY / transform.scale;
+        // Calcul robuste basé sur le ratio entre la taille affichée et la taille réelle
+        // relativeToCenterX est la distance en pixels écran par rapport au centre de l'image (déjà transformée)
+        // rect.width est la largeur affichée actuelle (incluant le scale)
 
-        const pixelX = Math.floor(centerX + unscaledX);
-        const pixelY = Math.floor(centerY + unscaledY);
+        // On calcule la position relative en pourcentage (-0.5 à +0.5 par rapport au centre)
+        const ratioX = relativeToCenterX / rect.width;
+        const ratioY = relativeToCenterY / rect.height;
+
+        // On projette ce pourcentage sur les dimensions réelles de l'image
+        const pixelX = Math.floor((0.5 + ratioX) * image.naturalWidth);
+        const pixelY = Math.floor((0.5 + ratioY) * image.naturalHeight);
 
         const ctx = canvas.getContext('2d', { willReadFrequently: true });
         if (ctx) {
-            const safeX = Math.max(0, Math.min(pixelX, image.naturalWidth - 1));
-            const safeY = Math.max(0, Math.min(pixelY, image.naturalHeight - 1));
+            const safeX = Math.max(0, Math.min(Math.floor(pixelX), image.naturalWidth - 1));
+            const safeY = Math.max(0, Math.min(Math.floor(pixelY), image.naturalHeight - 1));
             const pixelData = ctx.getImageData(safeX, safeY, 1, 1).data;
             const r = pixelData[0];
             const g = pixelData[1];
@@ -127,10 +133,11 @@ export function useImagePicker(options: UseImagePickerOptions = {}) {
                 // @ts-ignore
                 const clientY = event.changedTouches ? event.changedTouches[0].clientY : event.clientY;
 
-                const PICK_OFFSET = 120; // Décalage pour voir au-dessus du doigt
+                // On réduit l'offset pour que la loupe soit plus proche du doigt (plus intuitif sur mobile)
+                // Ou on s'assure qu'elle n'est pas hors écran
+                const PICK_OFFSET = 80; 
                 const targetY = clientY - PICK_OFFSET;
 
-                // On pick la couleur SOUS la loupe (targetY), pas sous le doigt (clientY)
                 const color = getPixelColor(clientX, targetY);
                 if (color) {
                     setLoupe({
@@ -142,7 +149,8 @@ export function useImagePicker(options: UseImagePickerOptions = {}) {
                     setPickedColor(color);
                     const matches = findTopMatches(color, 6, {
                         ownedPencilsIds,
-                        prioritizeOwned: true
+                        prioritizeOwned: true,
+                        allPencils // Passer la liste complète incluant les personnalisés
                     });
                     setMatchResult(matches.length > 0 ? matches[0] : null);
                     setAlternatives(matches.slice(1));

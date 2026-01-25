@@ -39,16 +39,18 @@ export function findTopMatches(
     options: {
         allowedBrands?: PencilBrand[],
         ownedPencilsIds?: string[],
-        prioritizeOwned?: boolean
+        prioritizeOwned?: boolean,
+        allPencils?: Pencil[]
     } = {}
 ): MatchResult[] {
     const targetColor = parse(targetHex);
     if (!targetColor) return [];
 
-    const { allowedBrands, ownedPencilsIds, prioritizeOwned } = options;
+    const { allowedBrands, ownedPencilsIds, prioritizeOwned, allPencils } = options;
 
     // 1. Obtenir tous les candidats possibles
-    const allCandidates = (pencilsData as Pencil[]).filter(p => {
+    const candidates = allPencils || (pencilsData as Pencil[]);
+    const allCandidates = candidates.filter(p => {
         if (allowedBrands && allowedBrands.length > 0 && !allowedBrands.includes(p.brand)) {
             return false;
         }

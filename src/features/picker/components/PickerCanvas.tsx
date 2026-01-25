@@ -259,9 +259,10 @@ const handleSaveDrawing = async () => {
                         exit={{ scale: 0, opacity: 0 }}
                         style={{
                             left: loupe.x,
-                            top: loupe.y, // loupe.y contient déjà l'offset (mouvement par rapport au doigt)
+                            top: loupe.y - 40, 
                         }}
                         className="fixed z-50 pointer-events-none -translate-x-1/2 -translate-y-1/2"
+
                     >
                         <div className="relative">
                             <div className="w-28 h-28 rounded-full border-4 border-white shadow-2xl flex items-center justify-center overflow-hidden bg-white">
