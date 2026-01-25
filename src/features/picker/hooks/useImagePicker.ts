@@ -21,7 +21,7 @@ export function useImagePicker(options: UseImagePickerOptions = {}) {
     const [loupe, setLoupe] = useState<{ x: number, y: number, color: string } | null>(null);
     const [matchResult, setMatchResult] = useState<MatchResult | null>(null);
     const [alternatives, setAlternatives] = useState<MatchResult[]>([]);
-    
+
     // NOUVEAU : Mode Pipette explicite pour éviter les conflits de gestures
     const [isPipetteMode, setIsPipetteMode] = useState(false);
 
@@ -69,23 +69,17 @@ export function useImagePicker(options: UseImagePickerOptions = {}) {
 
         const rect = image.getBoundingClientRect();
 
-        // Coordonnées du centre de l'image native
-        const centerX = image.naturalWidth / 2;
-        const centerY = image.naturalHeight / 2;
+        // Coordonnées relatives à l'image affichée (0 -> width)
+        const x = clientX - rect.left;
+        const y = clientY - rect.top;
 
-        // Position de la souris par rapport au centre de l'élément transformé
-        const domCenterX = rect.left + rect.width / 2;
-        const domCenterY = rect.top + rect.height / 2;
+        // Ratio par rapport à la taille affichée (getBoundingClientRect contient déjà le scale)
+        const xPercent = x / rect.width;
+        const yPercent = y / rect.height;
 
-        const relativeToCenterX = clientX - domCenterX;
-        const relativeToCenterY = clientY - domCenterY;
-
-        // On compense le scale pour revenir aux coords natives
-        const unscaledX = relativeToCenterX / transform.scale;
-        const unscaledY = relativeToCenterY / transform.scale;
-
-        const pixelX = Math.floor(centerX + unscaledX);
-        const pixelY = Math.floor(centerY + unscaledY);
+        // Coordonnées pixel dans l'image naturelle
+        const pixelX = Math.floor(xPercent * image.naturalWidth);
+        const pixelY = Math.floor(yPercent * image.naturalHeight);
 
         const ctx = canvas.getContext('2d', { willReadFrequently: true });
         if (ctx) {
@@ -114,7 +108,7 @@ export function useImagePicker(options: UseImagePickerOptions = {}) {
                 if (loupe) setLoupe(null);
                 // Si on était en mode pipette et qu'on a mis 2 doigts, on annule l'action actuelle
                 if (isPipetteMode && realTouches > 1) cancel();
-                
+
                 setTransform(t => ({ ...t, x, y }));
                 return;
             }
@@ -136,22 +130,17 @@ export function useImagePicker(options: UseImagePickerOptions = {}) {
                             color
                         });
 
-                        // Pick temporaire pour feedback immédiat (si nécessaire)
+                        // Feedback immédiat : on met à jour la couleur et le match en temps réel
                         setPickedColor(color);
+                        const matches = findTopMatches(color, 6);
+                        setMatchResult(matches.length > 0 ? matches[0] : null);
+                        setAlternatives(matches.slice(1));
                     }
                 }
 
                 if (last) {
-                    if (loupe) {
-                        setPickedColor(loupe.color);
-                        // Recherche Matchs
-                        const matches = findTopMatches(loupe.color, 6);
-                        setMatchResult(matches.length > 0 ? matches[0] : null);
-                        setAlternatives(matches.slice(1));
-                    }
                     setLoupe(null);
-                    // Optionnel : Désactiver le mode pipette après un pick ? 
-                    // setIsPipetteMode(false); // On laisse actif pour picker plusieurs fois si besoin
+                    setIsPipetteMode(false); // On quitte le mode pipette une fois la couleur figée
                 }
             }
         },

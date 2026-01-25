@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, Image as ImageIcon, Save, History, Loader2, X, Check, Plus } from 'lucide-react';
+import { ArrowLeft, Image as ImageIcon, Save, History, Loader2, X, Check, Plus, Pipette } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDrawings } from '@/features/drawings/hooks/useDrawings';
 import { cloudflareApi } from '@/lib/cloudflare-api';
@@ -142,7 +142,7 @@ export function PickerCanvas() {
                         )}
                         title={isPipetteMode ? "Désactiver la pipette" : "Activer la pipette"}
                     >
-                        <Plus size={24} className={cn("transition-transform", isPipetteMode ? "rotate-45" : "")} />
+                        <Pipette size={24} className={cn("transition-transform", isPipetteMode ? "scale-110" : "")} />
                     </button>
 
                     {transform.scale > 1.1 && (
@@ -170,7 +170,7 @@ export function PickerCanvas() {
                             exit={{ y: -20, opacity: 0 }}
                             className="bg-primary/90 text-primary-foreground px-4 py-2 rounded-full text-sm font-bold shadow-lg backdrop-blur-md flex items-center gap-2"
                         >
-                            <Plus size={16} /> Mode Pipette
+                            <Pipette size={16} /> Mode Pipette
                         </motion.div>
                     </div>
                 )}
