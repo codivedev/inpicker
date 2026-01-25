@@ -80,17 +80,18 @@ export function ColorResult({ color, match, alternatives, drawingId, onConfirm, 
 
     return (
         <AnimatePresence>
-            <motion.div
-                initial={{ y: 100, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: 100, opacity: 0 }}
-                className="fixed bottom-0 left-0 right-0 p-4 pb-8 z-30 pointer-events-none"
-            >
-                <div className={cn(
-                    "bg-card border shadow-2xl rounded-3xl mx-auto pointer-events-auto overflow-hidden transition-all duration-300 ease-in-out",
-                    isCollapsed ? "max-w-[200px] p-2" : "max-w-md p-5",
-                    isPicking && "opacity-60 scale-95 origin-bottom"
-                )}>
+                     <motion.div
+                         initial={{ y: 100, opacity: 0 }}
+                         animate={{ y: 0, opacity: 1 }}
+                         exit={{ y: 100, opacity: 0 }}
+                         transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                         className="fixed bottom-0 left-0 right-0 p-4 pb-8 z-30 pointer-events-none"
+                     >
+                 <div className={cn(
+                     "bg-card border shadow-2xl rounded-3xl mx-auto pointer-events-auto overflow-hidden transition-all duration-300 ease-in-out",
+                     isCollapsed ? "max-w-[200px] p-2" : "max-w-md p-6",
+                     isPicking && "opacity-60 scale-95 origin-bottom"
+                 )}>
 
                     {/* Header dynamique */}
                     <div className={cn(
@@ -192,28 +193,28 @@ export function ColorResult({ color, match, alternatives, drawingId, onConfirm, 
                                                 {activeMatch.pencil.brand} • <span className="font-mono bg-secondary px-1 rounded text-xs">{activeMatch.pencil.id}</span>
                                             </p>
 
-                                            {/* Primary CTA */}
-                                            <button
-                                                onClick={handleToggleInventory}
-                                                className={cn(
-                                                    "w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-sm transition-all shadow-sm active:scale-95",
-                                                    owned
-                                                        ? "bg-green-500/10 text-green-600 border border-green-500/20 hover:bg-green-500/20"
-                                                        : "bg-primary text-primary-foreground hover:bg-primary/90 shadow-primary/25"
-                                                )}
-                                            >
-                                                {owned ? (
-                                                    <>
-                                                        <Check size={18} strokeWidth={3} />
-                                                        Dans ma collection
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <Plus size={18} strokeWidth={3} />
-                                                        Ajouter à ma collection
-                                                    </>
-                                                )}
-                                            </button>
+                             {/* Primary CTA - More prominent */}
+                                             <button
+                                                 onClick={handleToggleInventory}
+                                                 className={cn(
+                                                     "w-full flex items-center justify-center gap-2 py-4 px-4 rounded-xl font-bold text-base transition-all shadow-lg hover:shadow-xl active:scale-95 transform-gpu",
+                                                     owned
+                                                         ? "bg-green-500/15 text-green-600 border-2 border-green-500/30 hover:bg-green-500/25"
+                                                         : "bg-primary text-primary-foreground hover:bg-primary/90 shadow-primary/30"
+                                                 )}
+                                             >
+                                                 {owned ? (
+                                                     <>
+                                                         <Check size={20} strokeWidth={3} />
+                                                         <span className="font-bold">Dans ma collection</span>
+                                                     </>
+                                                 ) : (
+                                                     <>
+                                                         <Plus size={20} strokeWidth={3} />
+                                                         <span className="font-bold">Ajouter à ma collection</span>
+                                                     </>
+                                                 )}
+                                             </button>
                                         </div>
 
                                         {/* Couleur Crayon (Visual Strip) */}
@@ -313,30 +314,30 @@ export function ColorResult({ color, match, alternatives, drawingId, onConfirm, 
                             {/* Boutons Actions Secondaires */}
                             {viewMode === 'summary' && (
                                 <div className="mt-4 pt-4 border-t border-border/50 flex items-center gap-3">
-                                    {/* Bouton Valider */}
-                                    {onConfirm && (
-                                        <button
-                                            onClick={onConfirm}
-                                            className="flex-1 py-3 bg-primary text-primary-foreground font-bold rounded-xl hover:bg-primary/90 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
-                                        >
-                                            <Check size={20} />
-                                            Valider
-                                        </button>
-                                    )}
+                                     {/* Bouton Valider - More prominent and professional */}
+                                     {onConfirm && (
+                                         <button
+                                             onClick={onConfirm}
+                                             className="flex-1 py-4 bg-primary text-primary-foreground font-bold rounded-xl hover:bg-primary/90 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-xl shadow-primary/30 hover:shadow-2xl hover:shadow-primary/40 transform-gpu"
+                                         >
+                                             <Check size={24} strokeWidth={3} />
+                                             <span className="font-bold text-lg">Valider la couleur</span>
+                                         </button>
+                                     )}
 
-                                    {/* Bouton Favoris */}
-                                    <button
-                                        onClick={toggleFavorite}
-                                        className={cn(
-                                            "p-3 rounded-xl transition-colors border",
-                                            favorite
-                                                ? "bg-rose-500/10 text-rose-500 border-rose-500/20"
-                                                : "bg-secondary/50 hover:bg-secondary text-muted-foreground border-transparent"
-                                        )}
-                                        title={favorite ? "Retirer des favoris" : "Ajouter aux favoris"}
-                                    >
-                                        <Bookmark size={20} fill={favorite ? "currentColor" : "none"} />
-                                    </button>
+                             {/* Bouton Favoris - Improved */}
+                                     <button
+                                         onClick={toggleFavorite}
+                                         className={cn(
+                                             "p-3 rounded-xl transition-colors border-2",
+                                             favorite
+                                                 ? "bg-rose-500/15 text-rose-500 border-rose-500/30 hover:bg-rose-500/25"
+                                                 : "bg-secondary/50 hover:bg-secondary text-muted-foreground border-transparent hover:border-border"
+                                         )}
+                                         title={favorite ? "Retirer des favoris" : "Ajouter aux favoris"}
+                                     >
+                                         <Bookmark size={22} fill={favorite ? "currentColor" : "none"} strokeWidth={favorite ? 2 : 1.5} />
+                                     </button>
 
                                     {/* Bouton ajout au dessin */}
                                     {drawingId ? (

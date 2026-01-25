@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useImagePicker } from '../hooks/useImagePicker';
 import { ColorResult } from './ColorResult';
+import { PremiumToolDrawer } from './PremiumToolDrawer';
 
 interface LocationState {
     drawingId?: number;
@@ -257,9 +258,9 @@ const handleSaveDrawing = async () => {
                         initial={{ scale: 0, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
                         exit={{ scale: 0, opacity: 0 }}
-                        style={{
+                         style={{
                             left: loupe.x,
-                            top: loupe.y - 40, 
+                            top: loupe.y, 
                         }}
                         className="fixed z-50 pointer-events-none -translate-x-1/2 -translate-y-1/2"
 
@@ -403,6 +404,9 @@ const handleSaveDrawing = async () => {
                     </div>
                 )}
             </AnimatePresence>
+
+            {/* Premium Tool Drawer */}
+            <PremiumToolDrawer />
         </div>
     );
 }

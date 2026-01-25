@@ -10,6 +10,14 @@ interface Transform {
     scale: number;
 }
 
+interface LoupeState {
+    x: number;
+    y: number;
+    color: string;
+    pixelX: number;
+    pixelY: number;
+}
+
 interface UseImagePickerOptions {
     initialImage?: string | null;
 }
@@ -18,12 +26,10 @@ export function useImagePicker(options: UseImagePickerOptions = {}) {
     const [imageSrc, setImageSrc] = useState<string | null>(options.initialImage || null);
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [transform, setTransform] = useState<Transform>({ x: 0, y: 0, scale: 1 });
-    const [pickedColor, setPickedColor] = useState<string | null>(null); // Hex
-    const [loupe, setLoupe] = useState<{ x: number, y: number, color: string } | null>(null);
+    const [pickedColor, setPickedColor] = useState<string | null>(null);
+    const [loupe, setLoupe] = useState<LoupeState | null>(null);
     const [matchResult, setMatchResult] = useState<MatchResult | null>(null);
     const [alternatives, setAlternatives] = useState<MatchResult[]>([]);
-
-    // NOUVEAU : Mode Pipette explicite pour éviter les conflits de gestures
     const [isPipetteMode, setIsPipetteMode] = useState(false);
 
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -35,24 +41,21 @@ export function useImagePicker(options: UseImagePickerOptions = {}) {
         .filter(p => p.is_owned === 1)
         .map(p => p.id);
 
-    // Nouveau : Liste de tous les crayons connus (Catalogue + Custom)
     const allPencils = Object.values(pencilsByBrand).flat();
 
-    // Mettre à jour l'image si initialImage change
     useEffect(() => {
         if (options.initialImage && options.initialImage !== imageSrc) {
             setImageSrc(options.initialImage);
-            setImageFile(null); // On reset le file si on charge une URL
+            setImageFile(null);
             setTransform({ x: 0, y: 0, scale: 1 });
             setPickedColor(null);
             setMatchResult(null);
             setAlternatives([]);
             setLoupe(null);
-            setIsPipetteMode(false); // Reset mode
+            setIsPipetteMode(false);
         }
     }, [options.initialImage, imageSrc]);
 
-    // Gestion de l'import image
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
@@ -61,7 +64,7 @@ export function useImagePicker(options: UseImagePickerOptions = {}) {
             reader.onload = (ev) => {
                 if (ev.target?.result) {
                     setImageSrc(ev.target.result as string);
-                    setTransform({ x: 0, y: 0, scale: 1 }); // Reset zoom
+                    setTransform({ x: 0, y: 0, scale: 1 });
                     setPickedColor(null);
                     setMatchResult(null);
                     setIsPipetteMode(false);
@@ -71,48 +74,40 @@ export function useImagePicker(options: UseImagePickerOptions = {}) {
         }
     };
 
-    const getPixelColor = (clientX: number, clientY: number) => {
+    const getPixelColor = (clientX: number, clientY: number): LoupeState | null => {
         const image = imageRef.current;
         const canvas = canvasRef.current;
         if (!image || !canvas) return null;
 
         const rect = image.getBoundingClientRect();
+        if (rect.width === 0 || rect.height === 0) return null;
 
+        const relativeX = clientX - rect.left;
+        const relativeY = clientY - rect.top;
 
+        const percentageX = relativeX / rect.width;
+        const percentageY = relativeY / rect.height;
 
-        // Position par rapport au centre de l'élément transformé
-        const domCenterX = rect.left + rect.width / 2;
-        const domCenterY = rect.top + rect.height / 2;
+        const pixelX = Math.floor(percentageX * image.naturalWidth);
+        const pixelY = Math.floor(percentageY * image.naturalHeight);
 
-        const relativeToCenterX = clientX - domCenterX;
-        const relativeToCenterY = clientY - domCenterY;
-
-        // Calcul robuste basé sur le ratio entre la taille affichée et la taille réelle
-        // relativeToCenterX est la distance en pixels écran par rapport au centre de l'image (déjà transformée)
-        // rect.width est la largeur affichée actuelle (incluant le scale)
-
-        // On calcule la position relative en pourcentage (-0.5 à +0.5 par rapport au centre)
-        const ratioX = relativeToCenterX / rect.width;
-        const ratioY = relativeToCenterY / rect.height;
-
-        // On projette ce pourcentage sur les dimensions réelles de l'image
-        const pixelX = Math.floor((0.5 + ratioX) * image.naturalWidth);
-        const pixelY = Math.floor((0.5 + ratioY) * image.naturalHeight);
+        if (image.naturalWidth === 0 || image.naturalHeight === 0) return null;
 
         const ctx = canvas.getContext('2d', { willReadFrequently: true });
-        if (ctx) {
-            const safeX = Math.max(0, Math.min(Math.floor(pixelX), image.naturalWidth - 1));
-            const safeY = Math.max(0, Math.min(Math.floor(pixelY), image.naturalHeight - 1));
-            const pixelData = ctx.getImageData(safeX, safeY, 1, 1).data;
-            const r = pixelData[0];
-            const g = pixelData[1];
-            const b = pixelData[2];
-            return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase()}`;
-        }
-        return null;
+        if (!ctx) return null;
+
+        const safeX = Math.max(0, Math.min(Math.floor(pixelX), image.naturalWidth - 1));
+        const safeY = Math.max(0, Math.min(Math.floor(pixelY), image.naturalHeight - 1));
+
+        const pixelData = ctx.getImageData(safeX, safeY, 1, 1).data;
+        const r = pixelData[0];
+        const g = pixelData[1];
+        const b = pixelData[2];
+        const color = `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase()}`;
+
+        return { x: clientX, y: clientY, color, pixelX: safeX, pixelY: safeY };
     };
 
-    // Bind Gestures
     const bind = useGesture({
         onDrag: ({ last, event, offset: [x, y], touches, pinching, cancel }) => {
             if (event.cancelable) event.preventDefault();
@@ -128,29 +123,28 @@ export function useImagePicker(options: UseImagePickerOptions = {}) {
             }
 
             if (isPipetteMode && realTouches === 1) {
-                // @ts-ignore
-                const clientX = event.changedTouches ? event.changedTouches[0].clientX : event.clientX;
-                // @ts-ignore
-                const clientY = event.changedTouches ? event.changedTouches[0].clientY : event.clientY;
+                const touchEvent = event as TouchEvent;
+                const clientX = touchEvent.changedTouches ? touchEvent.changedTouches[0].clientX : (event as any).clientX;
+                const clientY = touchEvent.changedTouches ? touchEvent.changedTouches[0].clientY : (event as any).clientY;
 
-                // On réduit l'offset pour que la loupe soit plus proche du doigt (plus intuitif sur mobile)
-                // Ou on s'assure qu'elle n'est pas hors écran
-                const PICK_OFFSET = 80; 
+                const PICK_OFFSET = 80;
                 const targetY = clientY - PICK_OFFSET;
 
-                const color = getPixelColor(clientX, targetY);
-                if (color) {
+                const pixelData = getPixelColor(clientX, targetY);
+                if (pixelData) {
                     setLoupe({
                         x: clientX,
-                        y: targetY, // La loupe s'affiche au-dessus
-                        color
+                        y: targetY,
+                        color: pixelData.color,
+                        pixelX: pixelData.pixelX,
+                        pixelY: pixelData.pixelY
                     });
 
-                    setPickedColor(color);
-                    const matches = findTopMatches(color, 6, {
+                    setPickedColor(pixelData.color);
+                    const matches = findTopMatches(pixelData.color, 6, {
                         ownedPencilsIds,
                         prioritizeOwned: true,
-                        allPencils // Passer la liste complète incluant les personnalisés
+                        allPencils
                     });
                     setMatchResult(matches.length > 0 ? matches[0] : null);
                     setAlternatives(matches.slice(1));
