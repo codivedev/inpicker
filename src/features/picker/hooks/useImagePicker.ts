@@ -18,9 +18,12 @@ export function useImagePicker(options: UseImagePickerOptions = {}) {
     const [imageSrc, setImageSrc] = useState<string | null>(options.initialImage || null);
     const [transform, setTransform] = useState<Transform>({ x: 0, y: 0, scale: 1 });
     const [pickedColor, setPickedColor] = useState<string | null>(null); // Hex
-    const [loupePos, setLoupePos] = useState<{ x: number, y: number } | null>(null);
+    const [loupe, setLoupe] = useState<{ x: number, y: number, color: string } | null>(null);
     const [matchResult, setMatchResult] = useState<MatchResult | null>(null);
     const [alternatives, setAlternatives] = useState<MatchResult[]>([]);
+    
+    // NOUVEAU : Mode Pipette explicite pour éviter les conflits de gestures
+    const [isPipetteMode, setIsPipetteMode] = useState(false);
 
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const containerRef = useRef<HTMLDivElement | null>(null);
@@ -36,7 +39,8 @@ export function useImagePicker(options: UseImagePickerOptions = {}) {
             setPickedColor(null);
             setMatchResult(null);
             setAlternatives([]);
-            setLoupePos(null);
+            setLoupe(null);
+            setIsPipetteMode(false); // Reset mode
         }
     }, [options.initialImage]);
 
@@ -51,115 +55,121 @@ export function useImagePicker(options: UseImagePickerOptions = {}) {
                     setTransform({ x: 0, y: 0, scale: 1 }); // Reset zoom
                     setPickedColor(null);
                     setMatchResult(null);
+                    setIsPipetteMode(false);
                 }
             };
             reader.readAsDataURL(file);
         }
     };
 
+    const getPixelColor = (clientX: number, clientY: number) => {
+        const image = imageRef.current;
+        const canvas = canvasRef.current;
+        if (!image || !canvas) return null;
+
+        const rect = image.getBoundingClientRect();
+
+        // Coordonnées du centre de l'image native
+        const centerX = image.naturalWidth / 2;
+        const centerY = image.naturalHeight / 2;
+
+        // Position de la souris par rapport au centre de l'élément transformé
+        const domCenterX = rect.left + rect.width / 2;
+        const domCenterY = rect.top + rect.height / 2;
+
+        const relativeToCenterX = clientX - domCenterX;
+        const relativeToCenterY = clientY - domCenterY;
+
+        // On compense le scale pour revenir aux coords natives
+        const unscaledX = relativeToCenterX / transform.scale;
+        const unscaledY = relativeToCenterY / transform.scale;
+
+        const pixelX = Math.floor(centerX + unscaledX);
+        const pixelY = Math.floor(centerY + unscaledY);
+
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        if (ctx) {
+            const safeX = Math.max(0, Math.min(pixelX, image.naturalWidth - 1));
+            const safeY = Math.max(0, Math.min(pixelY, image.naturalHeight - 1));
+            const pixelData = ctx.getImageData(safeX, safeY, 1, 1).data;
+            const r = pixelData[0];
+            const g = pixelData[1];
+            const b = pixelData[2];
+            return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase()}`;
+        }
+        return null;
+    };
+
     // Bind Gestures
     const bind = useGesture({
-        onDrag: ({ offset: [x, y] }) => {
-            setTransform(t => ({ ...t, x, y }));
-        },
-        onPinch: ({ offset: [s] }) => {
-            setTransform(t => ({ ...t, scale: s }));
-        },
-    }, {
-        drag: { from: () => [transform.x, transform.y] },
-        pinch: { scaleBounds: { min: 1, max: 8 }, modifierKey: null },
-    });
+        onDrag: ({ last, event, offset: [x, y], touches, pinching, cancel }) => {
+            if (event.cancelable) event.preventDefault();
 
-    // Fonction de picking
-    const pickColor = (e: React.MouseEvent | React.TouchEvent | React.PointerEvent) => {
-        if (!canvasRef.current || !containerRef.current || !imageRef.current) return;
+            // S'assurer qu'on utilise le nombre de doigts réel
+            const realTouches = (event as TouchEvent).touches ? (event as TouchEvent).touches.length : touches;
 
-        // On utilise getBoundingClientRect de l'IMAGE elle-même
-        // Cela inclut déjà le scale et le translate CSS !
-        const rect = imageRef.current.getBoundingClientRect();
+            // CAS 1 : PAN/ZOOM (2 doigts OU pinch OU !isPipetteMode)
+            // Si on n'est PAS en mode pipette, le drag à 1 doigt est un PAN.
+            if (realTouches > 1 || pinching || !isPipetteMode) {
+                if (loupe) setLoupe(null);
+                // Si on était en mode pipette et qu'on a mis 2 doigts, on annule l'action actuelle
+                if (isPipetteMode && realTouches > 1) cancel();
+                
+                setTransform(t => ({ ...t, x, y }));
+                return;
+            }
 
-        // Position du curseur
-        const clientX = 'touches' in e ? (e as any).touches[0].clientX : (e as any).clientX;
-        const clientY = 'touches' in e ? (e as any).touches[0].clientY : (e as any).clientY;
+            // CAS 2 : LOUPE (1 doigt ET isPipetteMode)
+            if (isPipetteMode && realTouches === 1) {
+                // @ts-ignore
+                const clientX = event.changedTouches ? event.changedTouches[0].clientX : event.clientX;
+                // @ts-ignore
+                const clientY = event.changedTouches ? event.changedTouches[0].clientY : event.clientY;
 
-        // Position relative à l'image affichée
-        const xInImage = clientX - rect.left;
-        const yInImage = clientY - rect.top;
+                const color = getPixelColor(clientX, clientY);
+                if (color) {
+                    const rect = containerRef.current?.getBoundingClientRect();
+                    if (rect) {
+                        setLoupe({
+                            x: clientX - rect.left,
+                            y: clientY - rect.top,
+                            color
+                        });
 
-        // Ratio entre taille naturelle et taille affichée
-        const scaleX = imageRef.current.naturalWidth / rect.width;
-        const scaleY = imageRef.current.naturalHeight / rect.height;
+                        // Pick temporaire pour feedback immédiat (si nécessaire)
+                        setPickedColor(color);
+                    }
+                }
 
-        // Coordonnées dans la source originale
-        const sourceX = Math.floor(xInImage * scaleX);
-        const sourceY = Math.floor(yInImage * scaleY);
-
-        // Validation des limites
-        if (sourceX < 0 || sourceX >= imageRef.current.naturalWidth ||
-            sourceY < 0 || sourceY >= imageRef.current.naturalHeight) return;
-
-        const ctx = canvasRef.current.getContext('2d', { willReadFrequently: true });
-        if (!ctx) return;
-
-        // Moyenne 3x3 pour la stabilité
-        let r = 0, g = 0, b = 0, count = 0;
-        const radius = 1;
-
-        try {
-            const pixelData = ctx.getImageData(sourceX - radius, sourceY - radius, radius * 2 + 1, radius * 2 + 1).data;
-
-            for (let i = 0; i < pixelData.length; i += 4) {
-                // On ignore les pixels transparents si jamais
-                if (pixelData[i + 3] > 0) {
-                    r += pixelData[i];
-                    g += pixelData[i + 1];
-                    b += pixelData[i + 2];
-                    count++;
+                if (last) {
+                    if (loupe) {
+                        setPickedColor(loupe.color);
+                        // Recherche Matchs
+                        const matches = findTopMatches(loupe.color, 6);
+                        setMatchResult(matches.length > 0 ? matches[0] : null);
+                        setAlternatives(matches.slice(1));
+                    }
+                    setLoupe(null);
+                    // Optionnel : Désactiver le mode pipette après un pick ? 
+                    // setIsPipetteMode(false); // On laisse actif pour picker plusieurs fois si besoin
                 }
             }
-
-            if (count > 0) {
-                r = Math.round(r / count);
-                g = Math.round(g / count);
-                b = Math.round(b / count);
-                const hex = `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase()}`;
-
-                setPickedColor(hex);
-                setLoupePos({ x: clientX, y: clientY });
-
-                // Recherche Matchs
-                const matches = findTopMatches(hex, 6);
-                setMatchResult(matches.length > 0 ? matches[0] : null);
-                setAlternatives(matches.slice(1));
-            }
-        } catch (err) {
-            // Hors limites canvas possible au bord
-        }
-    };
-
-    const handlePointerDown = (e: React.PointerEvent) => {
-        // Optionnel: Uniquement si un seul doigt
-        if (e.pointerType === 'touch' && !e.isPrimary) return;
-        pickColor(e);
-    };
-
-    const handlePointerMove = (e: React.PointerEvent) => {
-        // On ne pick que si le bouton est pressé ou si la loupe est déjà là (maintien)
-        if (e.buttons === 1 || e.pointerType === 'touch') {
-            pickColor(e);
-        }
-    };
-
-    const handlePointerUp = () => {
-        setLoupePos(null);
-    };
-
-    // Effet pour dessiner l'image dans le canvas une seule fois au chargement
-    useEffect(() => {
-        if (imageRef.current && canvasRef.current && imageSrc) {
-            // Déjà géré par <img onLoad>
-        }
-    }, [imageSrc]);
+        },
+        onPinch: ({ offset: [s], memo }) => {
+            if (loupe) setLoupe(null);
+            setTransform(t => ({ ...t, scale: s }));
+            return memo;
+        },
+    }, {
+        drag: {
+            from: () => [transform.x, transform.y],
+            delay: 150, // Anti-conflit
+            filterTaps: true,
+        },
+        pinch: {
+            scaleBounds: { min: 0.5, max: 8 },
+        },
+    });
 
     const onImageLoad = () => {
         if (imageRef.current && canvasRef.current) {
@@ -174,15 +184,20 @@ export function useImagePicker(options: UseImagePickerOptions = {}) {
         imageSrc,
         transform,
         pickedColor,
-        loupePos,
+        loupe,
         matchResult,
         alternatives,
         handleImageUpload,
         bindGestures: bind,
-        handlePointerDown,
-        handlePointerMove,
-        handlePointerUp,
         refs: { canvasRef, containerRef, imageRef },
-        onImageLoad
+        onImageLoad,
+        // New Exports
+        isPipetteMode,
+        togglePipetteMode: () => setIsPipetteMode(prev => !prev),
+        setPipetteMode: setIsPipetteMode,
+        resetView: () => {
+            setTransform({ x: 0, y: 0, scale: 1 });
+            // setPipetteMode(false); // Optionnel
+        }
     };
 }

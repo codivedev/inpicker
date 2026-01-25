@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, Image as ImageIcon, Save, History, Loader2, X, Check } from 'lucide-react';
+import { ArrowLeft, Image as ImageIcon, Save, History, Loader2, X, Check, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDrawings } from '@/features/drawings/hooks/useDrawings';
 import { cloudflareApi } from '@/lib/cloudflare-api';
@@ -31,16 +31,16 @@ export function PickerCanvas() {
         imageSrc,
         transform,
         pickedColor,
-        loupePos,
+        loupe,
         matchResult,
         alternatives,
         handleImageUpload,
         bindGestures,
-        handlePointerDown,
-        handlePointerMove,
-        handlePointerUp,
         refs,
-        onImageLoad
+        onImageLoad,
+        isPipetteMode,
+        togglePipetteMode,
+        resetView
     } = useImagePicker({ initialImage: state?.initialImage });
 
     // Patch temporaire car useImagePicker ne retourne pas encore imageFile dans la version actuelle
@@ -129,18 +129,65 @@ export function PickerCanvas() {
                 </div>
             </div>
 
+            {/* Toolbar Buttons (Pipette & Reset) */}
+            {imageSrc && (
+                <div className="absolute top-20 right-4 z-20 flex flex-col gap-3 pointer-events-auto">
+                    <button
+                        onClick={togglePipetteMode}
+                        className={cn(
+                            "p-3 rounded-full shadow-lg transition-all duration-200 backdrop-blur-md flex items-center justify-center",
+                            isPipetteMode
+                                ? "bg-primary text-primary-foreground ring-2 ring-primary ring-offset-2 scale-110"
+                                : "bg-background/60 hover:bg-background/80 text-foreground border border-border"
+                        )}
+                        title={isPipetteMode ? "Désactiver la pipette" : "Activer la pipette"}
+                    >
+                        <Plus size={24} className={cn("transition-transform", isPipetteMode ? "rotate-45" : "")} />
+                    </button>
+
+                    {transform.scale > 1.1 && (
+                        <motion.button
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.8 }}
+                            onClick={resetView}
+                            className="p-3 bg-background/60 hover:bg-background/80 text-foreground rounded-full shadow-lg backdrop-blur-md transition-colors border border-border"
+                            title="Réinitialiser la vue"
+                        >
+                            <Loader2 size={24} className="rotate-0 transition-transform active:rotate-180" />
+                        </motion.button>
+                    )}
+                </div>
+            )}
+
+            {/* Pipette Mode Indicator */}
+            <AnimatePresence>
+                {isPipetteMode && !loupe && (
+                    <div className="absolute top-24 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
+                        <motion.div
+                            initial={{ y: -20, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            exit={{ y: -20, opacity: 0 }}
+                            className="bg-primary/90 text-primary-foreground px-4 py-2 rounded-full text-sm font-bold shadow-lg backdrop-blur-md flex items-center gap-2"
+                        >
+                            <Plus size={16} /> Mode Pipette
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+
             {/* Zone Canvas / Image */}
             <div
                 ref={refs.containerRef}
                 {...bindGestures()}
-                onPointerDown={handlePointerDown}
-                onPointerMove={handlePointerMove}
-                onPointerUp={handlePointerUp}
-                onPointerCancel={handlePointerUp}
-                className="w-full h-full flex items-center justify-center cursor-crosshair touch-none"
+                className={cn(
+                    "w-full h-full flex items-center justify-center touch-none",
+                    isPipetteMode ? "cursor-crosshair" : "cursor-move"
+                )}
             >
                 {!imageSrc ? (
-                    <div className="text-center text-muted-foreground space-y-4">
+                    <div className="text-center text-muted-foreground space-y-4 px-4">
                         <ImageIcon size={64} className="mx-auto opacity-50" />
                         <p>Aucune image chargée.</p>
                         <label className="inline-block px-6 py-3 bg-primary rounded-xl text-white font-semibold cursor-pointer pointer-events-auto hover:bg-primary/90 transition-transform active:scale-95 shadow-lg">
@@ -177,17 +224,34 @@ export function PickerCanvas() {
             {/* Canvas Offscreen pour pixel reading */}
             <canvas ref={refs.canvasRef} className="hidden" />
 
-            {/* Loupe (Si active) */}
-            {loupePos && pickedColor && (
-                <div
-                    className="fixed pointer-events-none z-50 w-24 h-24 rounded-full border-4 border-background shadow-2xl overflow-hidden"
-                    style={{
-                        left: loupePos.x - 48,
-                        top: loupePos.y - 120,
-                        backgroundColor: pickedColor
-                    }}
-                />
-            )}
+            {/* Loupe Procreate Style */}
+            <AnimatePresence>
+                {loupe && (
+                    <motion.div
+                        initial={{ scale: 0, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0, opacity: 0 }}
+                        style={{
+                            left: loupe.x,
+                            top: loupe.y - 120,
+                        }}
+                        className="fixed z-50 pointer-events-none -translate-x-1/2 -translate-y-1/2"
+                    >
+                        <div className="relative">
+                            <div className="w-28 h-28 rounded-full border-4 border-white shadow-2xl flex items-center justify-center overflow-hidden bg-white">
+                                <div className="w-full h-full" style={{ backgroundColor: loupe.color }} />
+                            </div>
+                            <div className="absolute inset-0 flex items-center justify-center">
+                                <Plus className="text-black/50 drop-shadow-sm" size={14} strokeWidth={3} />
+                                <Plus className="absolute text-white/50 drop-shadow-sm" size={14} strokeWidth={2} />
+                            </div>
+                            <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-black/80 text-white text-xs font-mono px-2 py-1 rounded-md whitespace-nowrap">
+                                {loupe.color}
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* Résultat */}
             <ColorResult
