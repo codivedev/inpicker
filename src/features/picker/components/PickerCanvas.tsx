@@ -29,6 +29,7 @@ export function PickerCanvas() {
 
     const {
         imageSrc,
+        imageFile,
         transform,
         pickedColor,
         loupe,
@@ -55,17 +56,12 @@ export function PickerCanvas() {
     // MAIS, je peux feinter : si l'utilisateur a uploadé une image, je ne l'ai qu'en DataURL dans `imageSrc`.
     // Pour l'envoyer au serveur, je devrai convertir le DataURL en Blob/File. C'est possible.
 
-    const handleSaveDrawing = async () => {
-        if (!imageSrc || !saveTitle.trim() || isSaving) return;
+const handleSaveDrawing = async () => {
+        if (!imageFile || !saveTitle.trim() || isSaving) return;
 
         setIsSaving(true);
         try {
-            // Conversion DataURL -> File
-            const response = await fetch(imageSrc);
-            const blob = await response.blob();
-            const fileToUpload = new File([blob], "scan_image.png", { type: blob.type });
-
-            const drawingId = await createDrawing(saveTitle.trim(), fileToUpload);
+            const drawingId = await createDrawing(saveTitle.trim(), imageFile);
             setActiveDrawingId(drawingId);
             setShowSaveForm(false);
             setSaveTitle('');
@@ -187,18 +183,42 @@ export function PickerCanvas() {
                 )}
             >
                 {!imageSrc ? (
-                    <div className="text-center text-muted-foreground space-y-4 px-4">
-                        <ImageIcon size={64} className="mx-auto opacity-50" />
-                        <p>Aucune image chargée.</p>
-                        <label className="inline-block px-6 py-3 bg-primary rounded-xl text-white font-semibold cursor-pointer pointer-events-auto hover:bg-primary/90 transition-transform active:scale-95 shadow-lg">
-                            Importer une Photo
-                            <input
-                                type="file"
-                                accept="image/*"
-                                onChange={handleImageUpload}
-                                className="hidden"
-                            />
-                        </label>
+                    <div className="flex flex-col items-center justify-center p-8 text-center max-w-md mx-auto space-y-8 animate-in fade-in zoom-in duration-500">
+                        <div className="relative">
+                            <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full" />
+                            <div className="relative bg-card p-6 rounded-[2rem] shadow-2xl border border-border/50 rotate-3 transition-transform hover:rotate-0 duration-500">
+                                <ImageIcon size={64} className="text-primary" strokeWidth={1.5} />
+                            </div>
+                        </div>
+                        
+                        <div className="space-y-2">
+                            <h2 className="text-3xl font-bold tracking-tight">Scanner une couleur</h2>
+                            <p className="text-muted-foreground text-lg leading-relaxed">
+                                Importez une photo pour identifier les crayons correspondants dans votre collection.
+                            </p>
+                        </div>
+
+                        <div className="flex flex-col gap-3 w-full max-w-xs">
+                            <label className="group relative flex items-center justify-center gap-3 px-8 py-4 bg-primary text-primary-foreground rounded-2xl font-bold text-lg cursor-pointer hover:bg-primary/90 transition-all shadow-lg shadow-primary/25 active:scale-95 overflow-hidden">
+                                <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+                                <Plus size={24} />
+                                <span>Choisir une photo</span>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleImageUpload}
+                                    className="hidden"
+                                />
+                            </label>
+                            
+                            <button 
+                                onClick={() => setShowHistory(true)}
+                                className="flex items-center justify-center gap-3 px-8 py-4 bg-secondary/50 text-foreground rounded-2xl font-semibold hover:bg-secondary transition-all border border-transparent hover:border-border"
+                            >
+                                <History size={20} />
+                                <span>Mes dessins récents</span>
+                            </button>
+                        </div>
                     </div>
                 ) : (
                     <div

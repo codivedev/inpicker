@@ -16,6 +16,7 @@ interface UseImagePickerOptions {
 
 export function useImagePicker(options: UseImagePickerOptions = {}) {
     const [imageSrc, setImageSrc] = useState<string | null>(options.initialImage || null);
+    const [imageFile, setImageFile] = useState<File | null>(null);
     const [transform, setTransform] = useState<Transform>({ x: 0, y: 0, scale: 1 });
     const [pickedColor, setPickedColor] = useState<string | null>(null); // Hex
     const [loupe, setLoupe] = useState<{ x: number, y: number, color: string } | null>(null);
@@ -38,6 +39,7 @@ export function useImagePicker(options: UseImagePickerOptions = {}) {
     useEffect(() => {
         if (options.initialImage && options.initialImage !== imageSrc) {
             setImageSrc(options.initialImage);
+            setImageFile(null); // On reset le file si on charge une URL
             setTransform({ x: 0, y: 0, scale: 1 });
             setPickedColor(null);
             setMatchResult(null);
@@ -51,6 +53,7 @@ export function useImagePicker(options: UseImagePickerOptions = {}) {
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
+            setImageFile(file);
             const reader = new FileReader();
             reader.onload = (ev) => {
                 if (ev.target?.result) {
@@ -72,20 +75,23 @@ export function useImagePicker(options: UseImagePickerOptions = {}) {
 
         const rect = image.getBoundingClientRect();
 
-        // Coordonnées relatives à l'image affichée (0 -> width)
-        const x = clientX - rect.left;
-        const y = clientY - rect.top;
+        // Calcul robuste basé sur le centre (Inspiré de ColorScanner)
+        const centerX = image.naturalWidth / 2;
+        const centerY = image.naturalHeight / 2;
 
-        // Ratio par rapport à la taille affichée
-        const xPercent = x / rect.width;
-        const yPercent = y / rect.height;
+        // Position par rapport au centre de l'élément transformé
+        const domCenterX = rect.left + rect.width / 2;
+        const domCenterY = rect.top + rect.height / 2;
 
-        // Sécurité : si on touche en dehors de l'image
-        if (xPercent < 0 || xPercent > 1 || yPercent < 0 || yPercent > 1) return null;
+        const relativeToCenterX = clientX - domCenterX;
+        const relativeToCenterY = clientY - domCenterY;
 
-        // Coordonnées pixel dans l'image naturelle
-        const pixelX = Math.floor(xPercent * image.naturalWidth);
-        const pixelY = Math.floor(yPercent * image.naturalHeight);
+        // On compense le scale et les transforms pour revenir aux coords natives
+        const unscaledX = relativeToCenterX / transform.scale;
+        const unscaledY = relativeToCenterY / transform.scale;
+
+        const pixelX = Math.floor(centerX + unscaledX);
+        const pixelY = Math.floor(centerY + unscaledY);
 
         const ctx = canvas.getContext('2d', { willReadFrequently: true });
         if (ctx) {
@@ -121,14 +127,15 @@ export function useImagePicker(options: UseImagePickerOptions = {}) {
                 // @ts-ignore
                 const clientY = event.changedTouches ? event.changedTouches[0].clientY : event.clientY;
 
-                const PICK_OFFSET = 160; // Augmenté pour mieux voir sous le doigt
+                const PICK_OFFSET = 120; // Décalage pour voir au-dessus du doigt
                 const targetY = clientY - PICK_OFFSET;
 
-                const color = getPixelColor(clientX, targetY);
+                // On pick la couleur SOUS le doigt (clientY), pas sous la loupe (targetY)
+                const color = getPixelColor(clientX, clientY);
                 if (color) {
                     setLoupe({
                         x: clientX,
-                        y: targetY, // La loupe sera centrée sur le point pické
+                        y: targetY, // La loupe s'affiche au-dessus
                         color
                     });
 
@@ -140,13 +147,11 @@ export function useImagePicker(options: UseImagePickerOptions = {}) {
                     setMatchResult(matches.length > 0 ? matches[0] : null);
                     setAlternatives(matches.slice(1));
                 } else {
-                    // Si on est hors image, on déplace quand même la loupe visuellement
                     setLoupe(prev => prev ? { ...prev, x: clientX, y: targetY } : null);
                 }
 
                 if (last) {
                     setLoupe(null);
-                    // On ne désactive plus le mode pipette automatiquement pour permettre plusieurs picks
                 }
             }
         },
@@ -177,6 +182,7 @@ export function useImagePicker(options: UseImagePickerOptions = {}) {
 
     return {
         imageSrc,
+        imageFile,
         transform,
         pickedColor,
         loupe,

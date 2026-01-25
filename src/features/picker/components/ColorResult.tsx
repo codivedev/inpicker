@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { getPencilId, hexToRgb } from '@/lib/color-utils';
 import type { MatchResult } from '@/lib/color-utils';
 import { useInventory } from '@/features/inventory/hooks/useInventory';
-import { Check, AlertTriangle, X, Info, Bookmark, Plus, ChevronDown, ChevronUp } from 'lucide-react';
+import { Check, X, Info, Bookmark, Plus, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DrawingPicker } from '@/features/drawings/components/DrawingPicker';
 import { useDrawings } from '@/features/drawings/hooks/useDrawings';
@@ -19,7 +19,7 @@ interface ColorResultProps {
 type ViewMode = 'summary' | 'alternatives' | 'details';
 
 export function ColorResult({ color, match, alternatives, drawingId }: ColorResultProps) {
-    const { isOwned } = useInventory();
+    const { isOwned, togglePencil } = useInventory();
     const { addPencilToDrawing } = useDrawings();
     const { addFavorite, removeFavorite, isFavorite } = useFavorites();
     const [viewMode, setViewMode] = useState<ViewMode>('summary');
@@ -57,7 +57,13 @@ export function ColorResult({ color, match, alternatives, drawingId }: ColorResu
         }
     };
 
+    const handleToggleInventory = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        togglePencil(activeMatch.pencil);
+    };
+
     const owned = isOwned(activeMatch.pencil);
+
     const confidenceColor = activeMatch.confidence > 90
         ? 'text-green-500'
         : activeMatch.confidence > 70
@@ -148,7 +154,7 @@ export function ColorResult({ color, match, alternatives, drawingId }: ColorResu
                                         <div className="w-px h-16 bg-border mx-2" />
 
                                         {/* Résultat Match */}
-                                        <div className="flex-1">
+                                        <div className="flex-1 min-w-0">
                                             <div className="flex justify-between items-start mb-1">
                                                 <span className="text-xs font-bold text-muted-foreground uppercase tracking-wide">
                                                     {overrideMatch ? "Alternative Choisie" : "Meilleur Match"}
@@ -158,35 +164,43 @@ export function ColorResult({ color, match, alternatives, drawingId }: ColorResu
                                                 </span>
                                             </div>
 
-                                            <h3 className="text-lg font-bold leading-tight mb-1">
+                                            <h3 className="text-xl font-bold leading-tight mb-1 truncate">
                                                 {activeMatch.pencil.name}
                                             </h3>
-                                            <p className="text-sm text-foreground/70 mb-2">
+                                            <p className="text-sm text-foreground/70 mb-3">
                                                 {activeMatch.pencil.brand} • <span className="font-mono bg-secondary px-1 rounded text-xs">{activeMatch.pencil.id}</span>
                                             </p>
 
-                                            <div className="flex items-center gap-2">
-                                                {owned ? (
-                                                    <span className="inline-flex items-center gap-1 text-xs font-medium text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400 px-2 py-1 rounded-full">
-                                                        <Check size={12} strokeWidth={3} />
-                                                        Possédé
-                                                    </span>
-                                                ) : (
-                                                    <span className="inline-flex items-center gap-1 text-xs font-medium text-orange-600 bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400 px-2 py-1 rounded-full">
-                                                        <AlertTriangle size={12} strokeWidth={2} />
-                                                        À acheter
-                                                    </span>
+                                            {/* Primary CTA */}
+                                            <button
+                                                onClick={handleToggleInventory}
+                                                className={cn(
+                                                    "w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-sm transition-all shadow-sm active:scale-95",
+                                                    owned
+                                                        ? "bg-green-500/10 text-green-600 border border-green-500/20 hover:bg-green-500/20"
+                                                        : "bg-primary text-primary-foreground hover:bg-primary/90 shadow-primary/25"
                                                 )}
-                                            </div>
+                                            >
+                                                {owned ? (
+                                                    <>
+                                                        <Check size={18} strokeWidth={3} />
+                                                        Dans ma collection
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Plus size={18} strokeWidth={3} />
+                                                        Ajouter à ma collection
+                                                    </>
+                                                )}
+                                            </button>
                                         </div>
 
-                                        {/* Couleur Crayon */}
+                                        {/* Couleur Crayon (Visual Strip) */}
                                         <div
-                                            className="w-8 h-full min-h-[80px] rounded-r-xl border-l-4 border-black/10 relative overflow-hidden"
+                                            className="w-6 h-full min-h-[100px] rounded-full border-2 border-white/20 shadow-inner relative overflow-hidden ml-2"
                                             style={{ backgroundColor: activeMatch.pencil.hex }}
-                                        >
-                                            <div className="absolute inset-0 bg-gradient-to-r from-black/10 to-transparent pointer-events-none" />
-                                        </div>
+                                            title="Couleur du crayon"
+                                        />
                                     </motion.div>
                                 )}
 
@@ -275,24 +289,24 @@ export function ColorResult({ color, match, alternatives, drawingId }: ColorResu
                                 )}
                             </AnimatePresence>
 
-                            {/* Boutons Actions */}
+                            {/* Boutons Actions Secondaires */}
                             {viewMode === 'summary' && (
-                                <div className="mt-4 pt-4 border-t flex space-x-2">
+                                <div className="mt-4 pt-4 border-t border-border/50 flex items-center gap-3">
                                     {/* Bouton Favoris */}
                                     <button
                                         onClick={toggleFavorite}
                                         className={cn(
-                                            "p-2 rounded-xl transition-colors",
+                                            "p-3 rounded-xl transition-colors border",
                                             favorite
-                                                ? "bg-rose-500/20 text-rose-500"
-                                                : "bg-secondary hover:bg-secondary/80 text-muted-foreground"
+                                                ? "bg-rose-500/10 text-rose-500 border-rose-500/20"
+                                                : "bg-secondary/50 hover:bg-secondary text-muted-foreground border-transparent"
                                         )}
                                         title={favorite ? "Retirer des favoris" : "Ajouter aux favoris"}
                                     >
-                                        <Bookmark size={18} fill={favorite ? "currentColor" : "none"} />
+                                        <Bookmark size={20} fill={favorite ? "currentColor" : "none"} />
                                     </button>
 
-                                    {/* Bouton ajout au dessin - différent selon le contexte */}
+                                    {/* Bouton ajout au dessin */}
                                     {drawingId ? (
                                         <button
                                             onClick={async () => {
@@ -301,36 +315,47 @@ export function ColorResult({ color, match, alternatives, drawingId }: ColorResu
                                             }}
                                             disabled={addedToDrawing}
                                             className={cn(
-                                                "flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-colors",
+                                                "flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-colors border",
                                                 addedToDrawing
-                                                    ? "bg-green-500/10 text-green-500"
-                                                    : "bg-amber-500/10 hover:bg-amber-500/20 text-amber-500"
+                                                    ? "bg-green-500/10 text-green-600 border-green-500/20"
+                                                    : "bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 border-amber-500/20"
                                             )}
                                         >
-                                            {addedToDrawing ? <Check size={16} /> : <Plus size={16} />}
-                                            {addedToDrawing ? 'Ajouté' : 'Ajouter'}
+                                            {addedToDrawing ? <Check size={18} /> : <Plus size={18} />}
+                                            {addedToDrawing ? 'Ajouté au dessin' : 'Ajouter au dessin'}
                                         </button>
                                     ) : (
                                         <button
                                             onClick={() => setShowDrawingPicker(true)}
-                                            className="p-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 transition-colors"
+                                            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-secondary/50 hover:bg-secondary text-foreground font-medium transition-colors border border-transparent"
                                             title="Ajouter à un dessin"
                                         >
                                             <Bookmark size={18} />
+                                            <span>Ajouter à un dessin</span>
                                         </button>
                                     )}
-                                    <button
-                                        onClick={() => setViewMode('alternatives')}
-                                        className="flex-1 py-2 rounded-xl bg-secondary hover:bg-secondary/80 text-sm font-medium transition-colors"
-                                    >
-                                        Alternatives
-                                    </button>
-                                    <button
-                                        onClick={() => setViewMode('details')}
-                                        className="flex-1 py-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-medium transition-colors shadow-sm"
-                                    >
-                                        Détails
-                                    </button>
+
+                                    {/* More Options / View Switcher */}
+                                    <div className="flex bg-secondary/50 rounded-xl p-1 border border-transparent">
+                                        <button
+                                            onClick={() => setViewMode('alternatives')}
+                                            className="p-2 rounded-lg hover:bg-background text-muted-foreground transition-colors"
+                                            title="Voir les alternatives"
+                                        >
+                                            <div className="flex -space-x-1">
+                                                <div className="w-2 h-2 rounded-full bg-current opacity-60" />
+                                                <div className="w-2 h-2 rounded-full bg-current opacity-80" />
+                                                <div className="w-2 h-2 rounded-full bg-current" />
+                                            </div>
+                                        </button>
+                                        <button
+                                            onClick={() => setViewMode('details')}
+                                            className="p-2 rounded-lg hover:bg-background text-muted-foreground transition-colors"
+                                            title="Voir les détails"
+                                        >
+                                            <Info size={20} />
+                                        </button>
+                                    </div>
                                 </div>
                             )}
                         </>
