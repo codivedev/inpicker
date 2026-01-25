@@ -105,7 +105,7 @@ export function ColorResult({ color, match, alternatives, drawingId }: ColorResu
                                     style={{ backgroundColor: color }}
                                 />
                                 <span className="text-xs font-bold truncate max-w-[100px]">
-                                    {activeMatch.pencil.name}
+                                    {activeMatch.pencil.brand === 'BRUTFUNER' ? `B${activeMatch.pencil.id}` : activeMatch.pencil.name}
                                 </span>
                             </div>
                         )}
@@ -164,8 +164,11 @@ export function ColorResult({ color, match, alternatives, drawingId }: ColorResu
                                                 </span>
                                             </div>
 
-                                            <h3 className="text-xl font-bold leading-tight mb-1 truncate">
+                                            <h3 className="text-xl font-bold leading-tight mb-1 truncate flex items-center gap-2">
                                                 {activeMatch.pencil.name}
+                                                {activeMatch.pencil.brand === 'BRUTFUNER' && (
+                                                    <span className="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded-full uppercase tracking-tighter">B180</span>
+                                                )}
                                             </h3>
                                             <p className="text-sm text-foreground/70 mb-3">
                                                 {activeMatch.pencil.brand} • <span className="font-mono bg-secondary px-1 rounded text-xs">{activeMatch.pencil.id}</span>
