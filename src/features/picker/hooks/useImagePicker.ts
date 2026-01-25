@@ -124,12 +124,15 @@ export function useImagePicker(options: UseImagePickerOptions = {}) {
                 // @ts-ignore
                 const clientY = event.changedTouches ? event.changedTouches[0].clientY : event.clientY;
 
-                const color = getPixelColor(clientX, clientY);
+                // CRITIQUE : on vise au dessus du doigt pour que la loupe soit la source
+                const PICK_OFFSET = 120; // Offset vertical pour dégager le doigt
+                const targetY = clientY - PICK_OFFSET;
+
+                const color = getPixelColor(clientX, targetY);
                 if (color) {
-                    // CRITIQUE : on utilise clientX/Y directs pour l'overlay fixed
                     setLoupe({
                         x: clientX,
-                        y: clientY,
+                        y: targetY,
                         color
                     });
 
@@ -138,6 +141,9 @@ export function useImagePicker(options: UseImagePickerOptions = {}) {
                     const matches = findTopMatches(color, 6);
                     setMatchResult(matches.length > 0 ? matches[0] : null);
                     setAlternatives(matches.slice(1));
+                } else {
+                    // Si on vise en dehors de l'image, on met à jour la position mais sans couleur
+                    setLoupe(prev => prev ? { ...prev, x: clientX, y: targetY } : null);
                 }
 
                 if (last) {

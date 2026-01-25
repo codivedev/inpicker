@@ -239,7 +239,7 @@ export function PickerCanvas() {
                         exit={{ scale: 0, opacity: 0 }}
                         style={{
                             left: loupe.x,
-                            top: loupe.y - 140, // Un peu plus haut pour dégager le doigt
+                            top: loupe.y, // loupe.y contient déjà l'offset (mouvement par rapport au doigt)
                         }}
                         className="fixed z-50 pointer-events-none -translate-x-1/2 -translate-y-1/2"
                     >
