@@ -1670,5 +1670,170 @@
             "g": 248,
             "b": 255
         }
+    },
+    {
+        "id": "001",
+        "brand": "Caran d'Ache Luminance",
+        "name": "White",
+        "hex": "#FFFFFF",
+        "rgb": {
+            "r": 255,
+            "g": 255,
+            "b": 255
+        }
+    },
+    {
+        "id": "009",
+        "brand": "Caran d'Ache Luminance",
+        "name": "Black",
+        "hex": "#000000",
+        "rgb": {
+            "r": 0,
+            "g": 0,
+            "b": 0
+        }
+    },
+    {
+        "id": "061",
+        "brand": "Caran d'Ache Luminance",
+        "name": "Permanent Red",
+        "hex": "#E60000",
+        "rgb": {
+            "r": 230,
+            "g": 0,
+            "b": 0
+        }
+    },
+    {
+        "id": "112",
+        "brand": "Caran d'Ache Luminance",
+        "name": "Manganese Violet",
+        "hex": "#6C3B6E",
+        "rgb": {
+            "r": 108,
+            "g": 59,
+            "b": 110
+        }
+    },
+    {
+        "id": "159",
+        "brand": "Caran d'Ache Luminance",
+        "name": "Prussian Blue",
+        "hex": "#003153",
+        "rgb": {
+            "r": 0,
+            "g": 49,
+            "b": 83
+        }
+    },
+    {
+        "id": "212",
+        "brand": "Caran d'Ache Luminance",
+        "name": "Chromium Oxide Green",
+        "hex": "#626C38",
+        "rgb": {
+            "r": 98,
+            "g": 108,
+            "b": 56
+        }
+    },
+    {
+        "id": "240",
+        "brand": "Caran d'Ache Luminance",
+        "name": "Lemon Yellow",
+        "hex": "#FFF44F",
+        "rgb": {
+            "r": 255,
+            "g": 244,
+            "b": 79
+        }
+    },
+    {
+        "id": "470",
+        "brand": "Caran d'Ache Luminance",
+        "name": "Spring Green",
+        "hex": "#89C579",
+        "rgb": {
+            "r": 137,
+            "g": 197,
+            "b": 121
+        }
+    },
+    {
+        "id": "548",
+        "brand": "Caran d'Ache Luminance",
+        "name": "Raw Umber",
+        "hex": "#734A12",
+        "rgb": {
+            "r": 115,
+            "g": 74,
+            "b": 18
+        }
+    },
+    {
+        "id": "661",
+        "brand": "Caran d'Ache Luminance",
+        "name": "Light Cobalt Blue",
+        "hex": "#0047AB",
+        "rgb": {
+            "r": 0,
+            "g": 71,
+            "b": 171
+        }
+    },
+    {
+        "id": "741",
+        "brand": "Caran d'Ache Luminance",
+        "name": "Burnt Ochre",
+        "hex": "#974121",
+        "rgb": {
+            "r": 151,
+            "g": 65,
+            "b": 33
+        }
+    },
+    {
+        "id": "801",
+        "brand": "Caran d'Ache Luminance",
+        "name": "Buff Titanium",
+        "hex": "#EBE1C5",
+        "rgb": {
+            "r": 235,
+            "g": 225,
+            "b": 197
+        }
+    },
+    {
+        "id": "820",
+        "brand": "Caran d'Ache Luminance",
+        "name": "Golden Bismuth Yellow",
+        "hex": "#F9D71C",
+        "rgb": {
+            "r": 249,
+            "g": 215,
+            "b": 28
+        }
+    },
+    {
+        "id": "841",
+        "brand": "Caran d'Ache Luminance",
+        "name": "Malachite Green",
+        "hex": "#97976F",
+        "rgb": {
+            "r": 151,
+            "g": 151,
+            "b": 111
+        }
+    },
+    {
+        "id": "901",
+        "brand": "Caran d'Ache Luminance",
+        "name": "Ultramarine",
+        "hex": "#120A8F",
+        "rgb": {
+            "r": 18,
+            "g": 10,
+            "b": 143
+        }
     }
 ]
