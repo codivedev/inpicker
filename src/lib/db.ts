@@ -36,12 +36,22 @@ export interface Drawing {
     createdAt: number;
 }
 
+export interface FavoriteColor {
+    id: string; // hex
+    hex: string;
+    name: string;
+    brand?: string;
+    pencilId?: string;
+    createdAt: number;
+}
+
 class InpickerDatabase extends Dexie {
     pencils!: Table<UserPencil>;
     customPencils!: Table<CustomPencil>;
     settings!: Table<AppSettings>;
     loginAttempts!: Table<LoginAttempt>;
     drawings!: Table<Drawing>;
+    favorites!: Table<FavoriteColor>;
 
     constructor() {
         super('InpickerDB');
@@ -59,6 +69,11 @@ class InpickerDatabase extends Dexie {
         // Version 3: Mes Dessins
         this.version(3).stores({
             drawings: 'id, title, createdAt'
+        });
+
+        // Version 4: Favoris
+        this.version(4).stores({
+            favorites: 'id, hex, createdAt'
         });
     }
 }

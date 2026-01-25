@@ -10,6 +10,7 @@ import { DrawingDetail } from '@/features/drawings/components/DrawingDetail';
 import { PaletteGenerator } from '@/features/ai/components/PaletteGenerator';
 import { ProfilePage } from '@/features/profile/components/ProfilePage';
 import { AdminDashboard } from '@/features/admin/components/AdminDashboard';
+import { SavedColors } from '@/features/favorites/components/SavedColors';
 import { ThemeProvider } from '@/components/theme-provider';
 
 function App() {
@@ -65,6 +66,7 @@ function App() {
         <Route path="/dessins/:id" element={<ProtectedRoute><DrawingDetail /></ProtectedRoute>} />
         <Route path="/generateur-ia" element={<ProtectedRoute><PaletteGenerator /></ProtectedRoute>} />
         <Route path="/mon-profil" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+        <Route path="/couleurs-sauvegardees" element={<ProtectedRoute><SavedColors /></ProtectedRoute>} />
 
         {/* Admin */}
         <Route path="/administration" element={<AdminRoute><AdminDashboard /></AdminRoute>} />

@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -16,6 +16,8 @@ import { useTheme } from '@/components/theme-provider';
 import { useDrawings } from '@/features/drawings/hooks/useDrawings';
 import { useInventory } from '@/features/inventory/hooks/useInventory';
 
+import { useFavorites } from '@/hooks/useFavorites';
+
 interface DashboardProps {
     isAdmin?: boolean;
 }
@@ -25,6 +27,7 @@ export function Dashboard({ isAdmin = false }: DashboardProps) {
     const { setTheme, theme } = useTheme();
     const { drawings } = useDrawings();
     const { ownedCount } = useInventory();
+    const { favorites } = useFavorites();
 
     const [userName] = useState(() => {
         return localStorage.getItem('inpicker_user_name') || 'Artiste';
@@ -215,9 +218,18 @@ export function Dashboard({ isAdmin = false }: DashboardProps) {
 
                     <motion.div
                         variants={item}
-                        className="col-span-1 h-48 rounded-[2rem] bg-secondary/30 border border-dashed flex flex-col items-center justify-center text-center p-6 text-muted-foreground opacity-50"
+                        onClick={() => navigate('/couleurs-sauvegardees')}
+                        className="col-span-1 h-48 rounded-[2rem] bg-card border p-6 flex flex-col justify-between gap-4 cursor-pointer hover:border-primary/50 transition-colors group shadow-sm active:scale-[0.95]"
                     >
-                        <span className="text-sm">Bientôt disponible</span>
+                        <div className="flex justify-between items-start">
+                            <div className="p-3 bg-rose-500/10 text-rose-500 rounded-2xl w-fit group-hover:bg-rose-500/20 transition-colors">
+                                <Palette size={24} />
+                            </div>
+                            <span className="text-xs font-bold bg-secondary px-2 py-1 rounded-full text-muted-foreground">{favorites?.length || 0}</span>
+                        </div>
+                        <div>
+                            <span className="text-xl font-bold block leading-tight">Couleurs<br />Sauvées</span>
+                        </div>
                     </motion.div>
                 </motion.div>
 

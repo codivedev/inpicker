@@ -7,6 +7,7 @@ import { Check, AlertTriangle, X, Info, Bookmark, Plus, ChevronDown, ChevronUp }
 import { cn } from '@/lib/utils';
 import { DrawingPicker } from '@/features/drawings/components/DrawingPicker';
 import { useDrawings } from '@/features/drawings/hooks/useDrawings';
+import { useFavorites } from '@/hooks/useFavorites';
 
 interface ColorResultProps {
     color: string | null;
@@ -20,6 +21,7 @@ type ViewMode = 'summary' | 'alternatives' | 'details';
 export function ColorResult({ color, match, alternatives, drawingId }: ColorResultProps) {
     const { isOwned } = useInventory();
     const { addPencilToDrawing } = useDrawings();
+    const { addFavorite, removeFavorite, isFavorite } = useFavorites();
     const [viewMode, setViewMode] = useState<ViewMode>('summary');
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [showDrawingPicker, setShowDrawingPicker] = useState(false);
@@ -38,6 +40,22 @@ export function ColorResult({ color, match, alternatives, drawingId }: ColorResu
     const activeMatch = overrideMatch || match;
 
     if (!color || !activeMatch) return null;
+
+    const favorite = isFavorite(color);
+
+    const toggleFavorite = async () => {
+        if (favorite) {
+            await removeFavorite(color);
+        } else {
+            await addFavorite({
+                id: color,
+                hex: color,
+                name: activeMatch.pencil.name,
+                brand: activeMatch.pencil.brand,
+                pencilId: getPencilId(activeMatch.pencil)
+            });
+        }
+    };
 
     const owned = isOwned(activeMatch.pencil);
     const confidenceColor = activeMatch.confidence > 90
@@ -260,6 +278,20 @@ export function ColorResult({ color, match, alternatives, drawingId }: ColorResu
                             {/* Boutons Actions */}
                             {viewMode === 'summary' && (
                                 <div className="mt-4 pt-4 border-t flex space-x-2">
+                                    {/* Bouton Favoris */}
+                                    <button
+                                        onClick={toggleFavorite}
+                                        className={cn(
+                                            "p-2 rounded-xl transition-colors",
+                                            favorite
+                                                ? "bg-rose-500/20 text-rose-500"
+                                                : "bg-secondary hover:bg-secondary/80 text-muted-foreground"
+                                        )}
+                                        title={favorite ? "Retirer des favoris" : "Ajouter aux favoris"}
+                                    >
+                                        <Bookmark size={18} fill={favorite ? "currentColor" : "none"} />
+                                    </button>
+
                                     {/* Bouton ajout au dessin - différent selon le contexte */}
                                     {drawingId ? (
                                         <button

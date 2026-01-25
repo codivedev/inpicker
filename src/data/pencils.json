@@ -1232,326 +1232,214 @@
         }
     },
     {
-        "id": "1",
-        "brand": "BRUTFUNER",
-        "name": "White",
-        "hex": "#FFFFFF",
-        "rgb": {
-            "r": 255,
-            "g": 255,
-            "b": 255
-        }
-    },
-    {
-        "id": "2",
-        "brand": "BRUTFUNER",
-        "name": "Lemon Yellow",
-        "hex": "#FFFF00",
-        "rgb": {
-            "r": 255,
-            "g": 255,
-            "b": 0
-        }
-    },
-    {
-        "id": "3",
-        "brand": "BRUTFUNER",
-        "name": "Gold",
-        "hex": "#FFD700",
-        "rgb": {
-            "r": 255,
-            "g": 215,
-            "b": 0
-        }
-    },
-    {
-        "id": "4",
-        "brand": "BRUTFUNER",
-        "name": "Orange",
-        "hex": "#FFA500",
-        "rgb": {
-            "r": 255,
-            "g": 165,
-            "b": 0
-        }
-    },
-    {
-        "id": "5",
-        "brand": "BRUTFUNER",
-        "name": "Orange Red",
-        "hex": "#FF4500",
-        "rgb": {
-            "r": 255,
-            "g": 69,
-            "b": 0
-        }
-    },
-    {
-        "id": "6",
-        "brand": "BRUTFUNER",
-        "name": "Red",
-        "hex": "#FF0000",
-        "rgb": {
-            "r": 255,
-            "g": 0,
-            "b": 0
-        }
-    },
-    {
-        "id": "7",
-        "brand": "BRUTFUNER",
-        "name": "Crimson",
-        "hex": "#DC143C",
-        "rgb": {
-            "r": 220,
-            "g": 20,
-            "b": 60
-        }
-    },
-    {
-        "id": "8",
-        "brand": "BRUTFUNER",
-        "name": "Hot Pink",
-        "hex": "#FF69B4",
-        "rgb": {
-            "r": 255,
-            "g": 105,
-            "b": 180
-        }
-    },
-    {
-        "id": "9",
-        "brand": "BRUTFUNER",
-        "name": "Pink",
-        "hex": "#FFC0CB",
-        "rgb": {
-            "r": 255,
-            "g": 192,
-            "b": 203
-        }
-    },
-    {
-        "id": "10",
-        "brand": "BRUTFUNER",
-        "name": "Purple",
-        "hex": "#800080",
-        "rgb": {
-            "r": 128,
-            "g": 0,
-            "b": 128
-        }
-    },
-    {
-        "id": "11",
-        "brand": "BRUTFUNER",
-        "name": "Indigo",
-        "hex": "#4B0082",
-        "rgb": {
-            "r": 75,
-            "g": 0,
-            "b": 130
-        }
-    },
-    {
-        "id": "12",
-        "brand": "BRUTFUNER",
-        "name": "Blue",
-        "hex": "#0000FF",
-        "rgb": {
-            "r": 0,
-            "g": 0,
-            "b": 255
-        }
-    },
-    {
-        "id": "13",
-        "brand": "BRUTFUNER",
-        "name": "Sky Blue",
-        "hex": "#87CEEB",
-        "rgb": {
-            "r": 135,
-            "g": 206,
-            "b": 235
-        }
-    },
-    {
-        "id": "14",
-        "brand": "BRUTFUNER",
-        "name": "Teal",
-        "hex": "#008080",
-        "rgb": {
-            "r": 0,
-            "g": 128,
-            "b": 128
-        }
-    },
-    {
-        "id": "15",
-        "brand": "BRUTFUNER",
-        "name": "Green",
-        "hex": "#008000",
-        "rgb": {
-            "r": 0,
-            "g": 128,
-            "b": 0
-        }
-    },
-    {
-        "id": "16",
-        "brand": "BRUTFUNER",
-        "name": "Lime",
-        "hex": "#00FF00",
-        "rgb": {
-            "r": 0,
-            "g": 255,
-            "b": 0
-        }
-    },
-    {
-        "id": "17",
-        "brand": "BRUTFUNER",
-        "name": "Brown",
-        "hex": "#A52A2A",
-        "rgb": {
-            "r": 165,
-            "g": 42,
-            "b": 42
-        }
-    },
-    {
-        "id": "18",
+        "id": "001",
         "brand": "BRUTFUNER",
         "name": "Black",
         "hex": "#000000",
-        "rgb": {
-            "r": 0,
-            "g": 0,
-            "b": 0
-        }
+        "rgb": { "r": 0, "g": 0, "b": 0 }
     },
     {
-        "id": "19",
+        "id": "002",
         "brand": "BRUTFUNER",
-        "name": "Grey",
-        "hex": "#808080",
-        "rgb": {
-            "r": 128,
-            "g": 128,
-            "b": 128
-        }
+        "name": "White",
+        "hex": "#FFFFFF",
+        "rgb": { "r": 255, "g": 255, "b": 255 }
     },
     {
-        "id": "20",
+        "id": "003",
         "brand": "BRUTFUNER",
         "name": "Silver",
         "hex": "#C0C0C0",
-        "rgb": {
-            "r": 192,
-            "g": 192,
-            "b": 192
-        }
+        "rgb": { "r": 192, "g": 192, "b": 192 }
     },
     {
-        "id": "21",
+        "id": "004",
         "brand": "BRUTFUNER",
-        "name": "Beige",
-        "hex": "#F5F5DC",
-        "rgb": {
-            "r": 245,
-            "g": 245,
-            "b": 220
-        }
+        "name": "Gold",
+        "hex": "#D4AF37",
+        "rgb": { "r": 212, "g": 175, "b": 55 }
     },
     {
-        "id": "22",
+        "id": "005",
         "brand": "BRUTFUNER",
-        "name": "Moccasin",
-        "hex": "#FFE4B5",
-        "rgb": {
-            "r": 255,
-            "g": 228,
-            "b": 181
-        }
+        "name": "Lemon Yellow",
+        "hex": "#FFF44F",
+        "rgb": { "r": 255, "g": 244, "b": 79 }
     },
     {
-        "id": "23",
+        "id": "006",
         "brand": "BRUTFUNER",
-        "name": "Peach Puff",
-        "hex": "#FFDAB9",
-        "rgb": {
-            "r": 255,
-            "g": 218,
-            "b": 185
-        }
+        "name": "Yellow",
+        "hex": "#FFD700",
+        "rgb": { "r": 255, "g": 215, "b": 0 }
     },
     {
-        "id": "24",
+        "id": "007",
         "brand": "BRUTFUNER",
-        "name": "Tan",
-        "hex": "#D2B48C",
-        "rgb": {
-            "r": 210,
-            "g": 180,
-            "b": 140
-        }
+        "name": "Cadmium Yellow",
+        "hex": "#FF9912",
+        "rgb": { "r": 255, "g": 153, "b": 18 }
     },
     {
-        "id": "25",
+        "id": "008",
         "brand": "BRUTFUNER",
-        "name": "BurlyWood",
-        "hex": "#DEB887",
-        "rgb": {
-            "r": 222,
-            "g": 184,
-            "b": 135
-        }
+        "name": "Orange Yellow",
+        "hex": "#FF8C00",
+        "rgb": { "r": 255, "g": 140, "b": 0 }
     },
     {
-        "id": "26",
+        "id": "009",
         "brand": "BRUTFUNER",
-        "name": "Saddle Brown",
-        "hex": "#8B4513",
-        "rgb": {
-            "r": 139,
-            "g": 69,
-            "b": 19
-        }
+        "name": "Orange",
+        "hex": "#FF7F00",
+        "rgb": { "r": 255, "g": 127, "b": 0 }
     },
     {
-        "id": "27",
+        "id": "010",
         "brand": "BRUTFUNER",
-        "name": "Sienna",
-        "hex": "#A0522D",
-        "rgb": {
-            "r": 160,
-            "g": 82,
-            "b": 45
-        }
+        "name": "Vermilion",
+        "hex": "#E34234",
+        "rgb": { "r": 227, "g": 66, "b": 52 }
     },
     {
-        "id": "28",
+        "id": "011",
         "brand": "BRUTFUNER",
-        "name": "Chocolate",
-        "hex": "#D2691E",
-        "rgb": {
-            "r": 210,
-            "g": 105,
-            "b": 30
-        }
+        "name": "Scarlet",
+        "hex": "#FF2400",
+        "rgb": { "r": 255, "g": 36, "b": 0 }
     },
     {
-        "id": "29",
+        "id": "012",
         "brand": "BRUTFUNER",
-        "name": "Peru",
-        "hex": "#CD853F",
-        "rgb": {
-            "r": 205,
-            "g": 133,
-            "b": 63
-        }
+        "name": "Carmine",
+        "hex": "#960018",
+        "rgb": { "r": 150, "g": 0, "b": 24 }
     },
     {
-        "id": "30",
+        "id": "013",
+        "brand": "BRUTFUNER",
+        "name": "Deep Red",
+        "hex": "#850101",
+        "rgb": { "r": 133, "g": 1, "b": 1 }
+    },
+    {
+        "id": "014",
+        "brand": "BRUTFUNER",
+        "name": "Pink",
+        "hex": "#FFC0CB",
+        "rgb": { "r": 255, "g": 192, "b": 203 }
+    },
+    {
+        "id": "015",
+        "brand": "BRUTFUNER",
+        "name": "Rose",
+        "hex": "#FF007F",
+        "rgb": { "r": 255, "g": 0, "b": 127 }
+    },
+    {
+        "id": "016",
+        "brand": "BRUTFUNER",
+        "name": "Magenta",
+        "hex": "#FF00FF",
+        "rgb": { "r": 255, "g": 0, "b": 255 }
+    },
+    {
+        "id": "017",
+        "brand": "BRUTFUNER",
+        "name": "Violet",
+        "hex": "#8F00FF",
+        "rgb": { "r": 143, "g": 0, "b": 255 }
+    },
+    {
+        "id": "018",
+        "brand": "BRUTFUNER",
+        "name": "Purple",
+        "hex": "#800080",
+        "rgb": { "r": 128, "g": 0, "b": 128 }
+    },
+    {
+        "id": "019",
+        "brand": "BRUTFUNER",
+        "name": "Deep Purple",
+        "hex": "#4B0082",
+        "rgb": { "r": 75, "g": 0, "b": 130 }
+    },
+    {
+        "id": "020",
+        "brand": "BRUTFUNER",
+        "name": "Ultramarine Blue",
+        "hex": "#120A8F",
+        "rgb": { "r": 18, "g": 10, "b": 143 }
+    },
+    {
+        "id": "021",
+        "brand": "BRUTFUNER",
+        "name": "Blue",
+        "hex": "#0000FF",
+        "rgb": { "r": 0, "g": 0, "b": 255 }
+    },
+    {
+        "id": "022",
+        "brand": "BRUTFUNER",
+        "name": "Sky Blue",
+        "hex": "#87CEEB",
+        "rgb": { "r": 135, "g": 206, "b": 235 }
+    },
+    {
+        "id": "023",
+        "brand": "BRUTFUNER",
+        "name": "Cobalt Blue",
+        "hex": "#0047AB",
+        "rgb": { "r": 0, "g": 71, "b": 171 }
+    },
+    {
+        "id": "024",
+        "brand": "BRUTFUNER",
+        "name": "Teal",
+        "hex": "#008080",
+        "rgb": { "r": 0, "g": 128, "b": 128 }
+    },
+    {
+        "id": "025",
+        "brand": "BRUTFUNER",
+        "name": "Turquoise",
+        "hex": "#40E0D0",
+        "rgb": { "r": 64, "g": 224, "b": 208 }
+    },
+    {
+        "id": "026",
+        "brand": "BRUTFUNER",
+        "name": "Emerald Green",
+        "hex": "#50C878",
+        "rgb": { "r": 80, "g": 200, "b": 120 }
+    },
+    {
+        "id": "027",
+        "brand": "BRUTFUNER",
+        "name": "Green",
+        "hex": "#008000",
+        "rgb": { "r": 0, "g": 128, "b": 0 }
+    },
+    {
+        "id": "028",
+        "brand": "BRUTFUNER",
+        "name": "Light Green",
+        "hex": "#90EE90",
+        "rgb": { "r": 144, "g": 238, "b": 144 }
+    },
+    {
+        "id": "029",
+        "brand": "BRUTFUNER",
+        "name": "Olive Green",
+        "hex": "#6B8E23",
+        "rgb": { "r": 107, "g": 142, "b": 35 }
+    },
+    {
+        "id": "030",
+        "brand": "Sap Green",
+        "hex": "#480607",
+        "rgb": { "r": 72, "g": 6, "b": 7 }
+    }
         "brand": "BRUTFUNER",
         "name": "Sandy Brown",
         "hex": "#F4A460",
@@ -1595,17 +1483,83 @@
         }
     },
     {
-        "id": "34",
+        "id": "030",
         "brand": "BRUTFUNER",
-        "name": "Bisque",
-        "hex": "#FFE4C4",
-        "rgb": {
-            "r": 255,
-            "g": 228,
-            "b": 196
-        }
+        "name": "Sap Green",
+        "hex": "#480607",
+        "rgb": { "r": 72, "g": 6, "b": 7 }
     },
     {
+        "id": "031",
+        "brand": "BRUTFUNER",
+        "name": "Yellow Green",
+        "hex": "#9ACD32",
+        "rgb": { "r": 154, "g": 205, "b": 50 }
+    },
+    {
+        "id": "032",
+        "brand": "BRUTFUNER",
+        "name": "Raw Sienna",
+        "hex": "#D2B48C",
+        "rgb": { "r": 210, "g": 180, "b": 140 }
+    },
+    {
+        "id": "033",
+        "brand": "BRUTFUNER",
+        "name": "Burnt Sienna",
+        "hex": "#A0522D",
+        "rgb": { "r": 160, "g": 82, "b": 45 }
+    },
+    {
+        "id": "034",
+        "brand": "BRUTFUNER",
+        "name": "Brown",
+        "hex": "#A52A2A",
+        "rgb": { "r": 165, "g": 42, "b": 42 }
+    },
+    {
+        "id": "035",
+        "brand": "BRUTFUNER",
+        "name": "Dark Brown",
+        "hex": "#654321",
+        "rgb": { "r": 101, "g": 67, "b": 33 }
+    },
+    {
+        "id": "036",
+        "brand": "BRUTFUNER",
+        "name": "Grey",
+        "hex": "#808080",
+        "rgb": { "r": 128, "g": 128, "b": 128 }
+    },
+    {
+        "id": "037",
+        "brand": "BRUTFUNER",
+        "name": "Cold Grey",
+        "hex": "#808088",
+        "rgb": { "r": 128, "g": 128, "b": 136 }
+    },
+    {
+        "id": "038",
+        "brand": "BRUTFUNER",
+        "name": "Warm Grey",
+        "hex": "#888080",
+        "rgb": { "r": 136, "g": 128, "b": 128 }
+    },
+    {
+        "id": "039",
+        "brand": "BRUTFUNER",
+        "name": "Light Grey",
+        "hex": "#D3D3D3",
+        "rgb": { "r": 211, "g": 211, "b": 211 }
+    },
+    {
+        "id": "040",
+        "brand": "BRUTFUNER",
+        "name": "Dark Grey",
+        "hex": "#A9A9A9",
+        "rgb": { "r": 169, "g": 169, "b": 169 }
+    }
+],
         "id": "35",
         "brand": "BRUTFUNER",
         "name": "Misty Rose",

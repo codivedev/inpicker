@@ -121,14 +121,14 @@ export function useImagePicker(options: UseImagePickerOptions = {}) {
                 // @ts-ignore
                 const clientY = event.changedTouches ? event.changedTouches[0].clientY : event.clientY;
 
-                const PICK_OFFSET = 120;
+                const PICK_OFFSET = 160; // Augmenté pour mieux voir sous le doigt
                 const targetY = clientY - PICK_OFFSET;
 
                 const color = getPixelColor(clientX, targetY);
                 if (color) {
                     setLoupe({
                         x: clientX,
-                        y: targetY,
+                        y: targetY, // La loupe sera centrée sur le point pické
                         color
                     });
 
@@ -140,12 +140,13 @@ export function useImagePicker(options: UseImagePickerOptions = {}) {
                     setMatchResult(matches.length > 0 ? matches[0] : null);
                     setAlternatives(matches.slice(1));
                 } else {
+                    // Si on est hors image, on déplace quand même la loupe visuellement
                     setLoupe(prev => prev ? { ...prev, x: clientX, y: targetY } : null);
                 }
 
                 if (last) {
                     setLoupe(null);
-                    setIsPipetteMode(false);
+                    // On ne désactive plus le mode pipette automatiquement pour permettre plusieurs picks
                 }
             }
         },
