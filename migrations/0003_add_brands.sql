@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS brands (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    user_id TEXT NOT NULL
+);
