@@ -80,6 +80,55 @@ export const cloudflareApi = {
         return res.json();
     },
 
+    async updateCustomPencil(oldId: string, data: { brand: string, name: string, number: string, hex: string }) {
+        const res = await fetch('/api/custom-pencils', {
+            method: 'PUT',
+            body: JSON.stringify({ oldId, ...data }),
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include'
+        });
+        if (!res.ok) throw new Error('Erreur lors de la modification du crayon');
+        return res.json();
+    },
+
+    async deleteCustomPencil(id: string) {
+        const res = await fetch(`/api/custom-pencils?id=${encodeURIComponent(id)}`, {
+            method: 'DELETE',
+            credentials: 'include'
+        });
+        if (!res.ok) throw new Error('Erreur lors de la suppression du crayon');
+        return res.json();
+    },
+
+    // ========== BRANDS ==========
+    async getCustomBrands() {
+        const res = await fetch('/api/brands', {
+            credentials: 'include'
+        });
+        if (!res.ok) throw new Error('Erreur lors de la récupération des marques');
+        return res.json();
+    },
+
+    async createCustomBrand(name: string) {
+        const res = await fetch('/api/brands', {
+            method: 'POST',
+            body: JSON.stringify({ name }),
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include'
+        });
+        if (!res.ok) throw new Error('Erreur lors de la création de la marque');
+        return res.json();
+    },
+
+    async deleteCustomBrand(id: string) {
+        const res = await fetch(`/api/brands?id=${encodeURIComponent(id)}`, {
+            method: 'DELETE',
+            credentials: 'include'
+        });
+        if (!res.ok) throw new Error('Erreur lors de la suppression de la marque');
+        return res.json();
+    },
+
     // ========== DRAWINGS ==========
     async getDrawings() {
         const res = await fetch('/api/drawings', {

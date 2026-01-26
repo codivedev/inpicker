@@ -1,40 +1,122 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Check, Search, Plus, X, Pipette } from 'lucide-react';
+import { ArrowLeft, Check, Search, Plus, X, Pipette, Edit2, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useInventory } from '../hooks/useInventory';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import { ColorScanner } from '@/features/picker/components/ColorScanner';
+import type { Pencil } from '@/types/pencil';
 
 export function InventoryManager() {
     const navigate = useNavigate();
-    const { pencilsByBrand, togglePencil, addCustomPencil, isOwned, ownedCount, totalCount } = useInventory();
+    const { 
+        pencilsByBrand, 
+        togglePencil, 
+        addCustomPencil, 
+        updateCustomPencil, 
+        deleteCustomPencil, 
+        isOwned, 
+        ownedCount, 
+        totalCount,
+        customBrands,
+        createCustomBrand
+    } = useInventory();
     const [searchTerm, setSearchTerm] = useState('');
     const [isAddingMode, setIsAddingMode] = useState(false);
     const [isScanning, setIsScanning] = useState(false);
+    const [editingPencil, setEditingPencil] = useState<Pencil | null>(null);
 
     // Form State
     const [newBrand, setNewBrand] = useState('');
     const [newName, setNewName] = useState('');
     const [newNumber, setNewNumber] = useState('');
     const [newHex, setNewHex] = useState('#000000');
+    const [isCreatingBrand, setIsCreatingBrand] = useState(false);
+    const [newBrandName, setNewBrandName] = useState('');
 
-    // Liste des marques triée
-    const brands = Object.keys(pencilsByBrand).sort();
-
-    const handleCreatePencil = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!newBrand || !newName || !newNumber) return;
-
-        await addCustomPencil(newBrand, newName, newNumber, newHex);
-
-        // Reset & Close
+    const handleOpenAdd = () => {
+        setEditingPencil(null);
         setNewBrand('');
         setNewName('');
         setNewNumber('');
         setNewHex('#000000');
-        setIsAddingMode(false);
+        setIsCreatingBrand(false);
+        setNewBrandName('');
+        setIsAddingMode(true);
     };
+
+    const handleOpenEdit = (pencil: Pencil, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setEditingPencil(pencil);
+        setNewBrand(pencil.brand);
+        setNewName(pencil.name);
+        setNewNumber(pencil.id);
+        setNewHex(pencil.hex);
+        setIsAddingMode(true);
+    };
+
+    const handleDeletePencil = async (pencil: Pencil, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (window.confirm(`Supprimer le crayon "${pencil.name}" ?`)) {
+            await deleteCustomPencil(`${pencil.brand}|${pencil.id}`);
+        }
+    };
+
+    const handleFormSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!newBrand || !newName || !newNumber) return;
+
+        if (editingPencil) {
+            await updateCustomPencil(`${editingPencil.brand}|${editingPencil.id}`, {
+                brand: newBrand,
+                name: newName,
+                number: newNumber,
+                hex: newHex
+            });
+        } else {
+            await addCustomPencil(newBrand, newName, newNumber, newHex);
+        }
+
+        // Reset & Close
+        handleCloseModal();
+    };
+
+    const handleBrandSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const value = e.target.value;
+        if (value === 'nouvelle') {
+            setIsCreatingBrand(true);
+            setNewBrand('');
+        } else {
+            setIsCreatingBrand(false);
+            setNewBrand(value);
+        }
+    };
+
+    const handleCreateBrand = async () => {
+        if (!newBrandName.trim()) return;
+        
+        try {
+            await createCustomBrand(newBrandName.trim());
+            setNewBrand(newBrandName.trim());
+            setIsCreatingBrand(false);
+            setNewBrandName('');
+        } catch (error) {
+            console.error('Failed to create brand:', error);
+            alert('Erreur lors de la création de la marque');
+        }
+    };
+
+    const handleCloseModal = () => {
+        setNewBrand('');
+        setNewName('');
+        setNewNumber('');
+        setNewHex('#000000');
+        setEditingPencil(null);
+        setIsAddingMode(false);
+        setIsCreatingBrand(false);
+        setNewBrandName('');
+    };
+
 
     const handleScanColor = (hex: string) => {
         setNewHex(hex);
@@ -80,7 +162,7 @@ export function InventoryManager() {
             </div>
 
             {/* Liste par Marque */}
-            {brands.map(brand => {
+            {Object.keys(pencilsByBrand).map(brand => {
                 const pencils = pencilsByBrand[brand].filter(p =>
                     searchTerm === '' ||
                     p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -133,9 +215,25 @@ export function InventoryManager() {
                                             </div>
                                         </div>
 
+                                        {pencil.isCustom && (
+                                            <div className="flex items-center gap-1 ml-2">
+                                                <button
+                                                    onClick={(e) => handleOpenEdit(pencil, e)}
+                                                    className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                                                >
+                                                    <Edit2 size={16} />
+                                                </button>
+                                                <button
+                                                    onClick={(e) => handleDeletePencil(pencil, e)}
+                                                    className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
+                                        )}
 
                                         <div className={cn(
-                                            "w-6 h-6 rounded-full border-2 ml-4 flex items-center justify-center transition-colors",
+                                            "w-6 h-6 rounded-full border-2 ml-2 flex items-center justify-center transition-colors",
                                             owned ? "border-primary bg-primary text-white" : "border-muted-foreground/30"
                                         )}>
                                             {owned && <Check size={12} strokeWidth={4} />}
@@ -152,13 +250,13 @@ export function InventoryManager() {
             <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => setIsAddingMode(true)}
+                onClick={handleOpenAdd}
                 className="fixed bottom-6 right-6 w-14 h-14 bg-primary text-primary-foreground rounded-full shadow-lg flex items-center justify-center z-40"
             >
                 <Plus size={28} />
             </motion.button>
 
-            {/* Modal Ajout */}
+            {/* Modal Ajout/Edit */}
             <AnimatePresence>
                 {isAddingMode && (
                     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
@@ -166,7 +264,7 @@ export function InventoryManager() {
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            onClick={() => setIsAddingMode(false)}
+                            onClick={handleCloseModal}
                             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
                         />
                         <motion.div
@@ -176,22 +274,34 @@ export function InventoryManager() {
                             className="bg-card w-full max-w-sm rounded-3xl p-6 relative z-10 shadow-2xl border"
                         >
                             <div className="flex justify-between items-center mb-6">
-                                <h3 className="text-xl font-bold">Ajouter un crayon</h3>
-                                <button onClick={() => setIsAddingMode(false)} className="p-2 bg-secondary rounded-full">
+                                <h3 className="text-xl font-bold">{editingPencil ? 'Modifier' : 'Ajouter'} un crayon</h3>
+                                <button onClick={handleCloseModal} className="p-2 bg-secondary rounded-full">
                                     <X size={20} />
                                 </button>
                             </div>
 
-                            <form onSubmit={handleCreatePencil} className="space-y-4">
+                            <form onSubmit={handleFormSubmit} className="space-y-4">
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-muted-foreground">Marque (ex: Caran d'Ache)</label>
-                                    <input
+                                    <label className="text-sm font-medium text-muted-foreground">Marque</label>
+                                    <select
                                         required
                                         value={newBrand}
-                                        onChange={e => setNewBrand(e.target.value)}
+                                        onChange={handleBrandSelect}
                                         className="w-full p-3 rounded-xl bg-secondary/50 border-none outline-none focus:ring-2 focus:ring-primary/50"
-                                        placeholder="Nom de la marque"
-                                    />
+                                    >
+                                        <option value="">Sélectionner une marque</option>
+                                        <option value="nouvelle">+ Ajouter une nouvelle marque</option>
+                                        {/* Built-in brands */}
+                                        {Object.keys(pencilsByBrand).filter(brand => 
+                                            !customBrands.some((cb: { name: string }) => cb.name === brand)
+                                        ).sort().map((brand: string) => (
+                                            <option key={brand} value={brand}>{brand}</option>
+                                        ))}
+                                        {/* Custom brands */}
+                                        {customBrands.sort((a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name)).map((brand: { id: string; name: string }) => (
+                                            <option key={brand.id} value={brand.name}>{brand.name} (personnalisé)</option>
+                                        ))}
+                                    </select>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4">
@@ -236,17 +346,52 @@ export function InventoryManager() {
                                     />
                                 </div>
 
-                                <button
-                                    type="submit"
-                                    className="w-full py-4 bg-primary text-primary-foreground font-bold rounded-xl shadow-lg mt-4 active:scale-[0.98] transition-transform"
-                                >
-                                    Créer et Ajouter à ma collection
-                                </button>
+                                    <button
+                                        type="submit"
+                                        className="w-full py-4 bg-primary text-primary-foreground font-bold rounded-xl shadow-lg mt-4 active:scale-[0.98] transition-transform"
+                                    >
+                                        {editingPencil ? 'Enregistrer les modifications' : 'Créer et Ajouter à ma collection'}
+                                    </button>
+                                    
+                                    {isCreatingBrand && (
+                                        <div className="space-y-4 mt-4 p-4 bg-primary/10 rounded-xl">
+                                            <p className="text-sm text-primary-foreground">
+                                                Créer une nouvelle marque :
+                                            </p>
+                                            <div className="flex gap-2">
+                                                <input
+                                                    type="text"
+                                                    value={newBrandName}
+                                                    onChange={(e) => setNewBrandName(e.target.value)}
+                                                    placeholder="Nom de la marque"
+                                                    className="flex-1 p-3 rounded-xl bg-background/50 border-none outline-none focus:ring-2 focus:ring-primary/50"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={handleCreateBrand}
+                                                    className="px-4 py-3 bg-primary text-primary-foreground font-medium rounded-xl hover:bg-primary/90 transition-colors"
+                                                >
+                                                    Créer
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setIsCreatingBrand(false);
+                                                        setNewBrandName('');
+                                                    }}
+                                                    className="px-4 py-3 bg-secondary text-secondary-foreground font-medium rounded-xl hover:bg-secondary/80 transition-colors"
+                                                >
+                                                    Annuler
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
                             </form>
                         </motion.div>
                     </div>
                 )}
             </AnimatePresence>
+
         </div>
     );
 }

@@ -35,6 +35,13 @@ export function useInventory() {
         staleTime: 0,
     });
 
+    // Récupérer les marques personnalisées depuis l'API
+    const { data: customBrands = [], isLoading: loadingBrands } = useQuery({
+        queryKey: ['custom-brands'],
+        queryFn: () => cloudflareApi.getCustomBrands(),
+        staleTime: 0,
+    });
+
     // Mutation pour toggle un crayon
     const toggleMutation = useMutation({
         mutationFn: async (pencil: Pencil) => {
@@ -99,12 +106,72 @@ export function useInventory() {
         }
     });
 
+    // Mutation pour modifier un crayon personnalisé
+    const updateCustomMutation = useMutation({
+        mutationFn: async ({ oldId, brand, name, number, hex }: { oldId: string; brand: string; name: string; number: string; hex: string }) => {
+            return cloudflareApi.updateCustomPencil(oldId, { brand, name, number, hex });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['custom-pencils'] });
+            queryClient.invalidateQueries({ queryKey: ['inventory'] });
+            queryClient.invalidateQueries({ queryKey: ['drawings'] }); // Les dessins peuvent être affectés si l'ID a changé
+        }
+    });
+
+    // Mutation pour supprimer un crayon personnalisé
+    const deleteCustomMutation = useMutation({
+        mutationFn: async (id: string) => {
+            return cloudflareApi.deleteCustomPencil(id);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['custom-pencils'] });
+            queryClient.invalidateQueries({ queryKey: ['inventory'] });
+            queryClient.invalidateQueries({ queryKey: ['drawings'] });
+        }
+    });
+
+    // Mutation pour ajouter une marque personnalisée
+    const createBrandMutation = useMutation({
+        mutationFn: async (name: string) => {
+            return cloudflareApi.createCustomBrand(name);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['custom-brands'] });
+        }
+    });
+
+    // Mutation pour supprimer une marque personnalisée
+    const deleteBrandMutation = useMutation({
+        mutationFn: async (id: string) => {
+            return cloudflareApi.deleteCustomBrand(id);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['custom-brands'] });
+        }
+    });
+
     const togglePencil = (pencil: Pencil) => {
         toggleMutation.mutate(pencil);
     };
 
     const addCustomPencil = async (brand: string, name: string, number: string, hex: string) => {
         await addCustomMutation.mutateAsync({ brand, name, number, hex });
+    };
+
+    const updateCustomPencil = async (oldId: string, data: { brand: string, name: string, number: string, hex: string }) => {
+        await updateCustomMutation.mutateAsync({ oldId, ...data });
+    };
+
+    const deleteCustomPencil = async (id: string) => {
+        await deleteCustomMutation.mutateAsync(id);
+    };
+
+    const createCustomBrand = async (name: string) => {
+        await createBrandMutation.mutateAsync(name);
+    };
+
+    const deleteCustomBrand = async (id: string) => {
+        await deleteBrandMutation.mutateAsync(id);
     };
 
     const isOwned = (pencil: Pencil): boolean => {
@@ -124,7 +191,8 @@ export function useInventory() {
             name: cp.name,
             brand: cp.brand as PencilBrand,
             hex: cp.hex,
-            rgb: { r, g, b }
+            rgb: { r, g, b },
+            isCustom: true
         };
     });
 
@@ -144,13 +212,19 @@ export function useInventory() {
     const ownedCount = inventoryData.filter(item => item.is_owned === 1).length;
 
     return {
-        loading: loadingInventory || loadingCustom,
+        loading: loadingInventory || loadingCustom || loadingBrands,
         pencilsByBrand,
         ownedPencils: inventoryData,
         togglePencil,
         addCustomPencil,
+        updateCustomPencil,
+        deleteCustomPencil,
         isOwned,
         ownedCount,
-        totalCount: allPencils.length
+        totalCount: allPencils.length,
+        customBrands,
+        loadingBrands,
+        createCustomBrand,
+        deleteCustomBrand
     };
 }

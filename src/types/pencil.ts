@@ -15,7 +15,9 @@ export interface Pencil {
         b: number;
     };
     hex: string; // ex: "#FFFFFF"
+    isCustom?: boolean;
 }
+
 
 export interface UserInventory {
     ownedPencils: string[]; // liste des IDs (ou composite brand+id car ID peut collisionner ?)
