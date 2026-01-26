@@ -16,9 +16,10 @@ interface ColorResultProps {
     drawingId?: number;
     onConfirm?: () => void;
     isPicking?: boolean;
+    isCustomAdd?: boolean;
 }
 
-export function ColorResult({ color, match, alternatives, drawingId, onConfirm, isPicking }: ColorResultProps) {
+export function ColorResult({ color, match, alternatives, drawingId, onConfirm, isPicking, isCustomAdd }: ColorResultProps) {
     const { isOwned, togglePencil } = useInventory();
     const { addPencilToDrawing } = useDrawings();
     const { addFavorite, removeFavorite, isFavorite } = useFavorites();
@@ -49,25 +50,28 @@ export function ColorResult({ color, match, alternatives, drawingId, onConfirm, 
     const favorite = isFavorite(color || '');
 
     const handleSaveColor = async () => {
-        if (!color || !activeMatch || isConfirming || isConfirmed) return;
+        if (!color || isConfirming || isConfirmed) return;
         
         setIsConfirming(true);
         try {
-            // 1. Toujours ajouter aux favoris par défaut pour ne rien perdre
-            if (!favorite) {
-                await addFavorite({
-                    id: color,
-                    hex: color,
-                    name: activeMatch.pencil.name,
-                    brand: activeMatch.pencil.brand,
-                    pencilId: getPencilId(activeMatch.pencil)
-                });
-            }
+            // Si on n'est pas en mode ajout personnalisé, on fait les sauvegardes habituelles
+            if (!isCustomAdd && activeMatch) {
+                // 1. Toujours ajouter aux favoris par défaut pour ne rien perdre
+                if (!favorite) {
+                    await addFavorite({
+                        id: color,
+                        hex: color,
+                        name: activeMatch.pencil.name,
+                        brand: activeMatch.pencil.brand,
+                        pencilId: getPencilId(activeMatch.pencil)
+                    });
+                }
 
-            // 2. Si on a un drawingId, on l'ajoute au dessin
-            if (drawingId) {
-                await addPencilToDrawing(drawingId, getPencilId(activeMatch.pencil));
-                setAddedToDrawing(true);
+                // 2. Si on a un drawingId, on l'ajoute au dessin
+                if (drawingId) {
+                    await addPencilToDrawing(drawingId, getPencilId(activeMatch.pencil));
+                    setAddedToDrawing(true);
+                }
             }
 
             setIsConfirmed(true);
@@ -135,9 +139,11 @@ export function ColorResult({ color, match, alternatives, drawingId, onConfirm, 
                         <div className="flex items-center gap-3 px-2 py-1 cursor-pointer" onClick={() => setIsCollapsed(false)}>
                             <div className="w-10 h-10 rounded-xl border-2 border-white/20 shadow-inner shrink-0" style={{ backgroundColor: color }} />
                             <div className="flex-1 min-w-0">
-                                <p className="text-[10px] font-bold text-muted-foreground uppercase leading-none mb-1">Match</p>
+                                <p className="text-[10px] font-bold text-muted-foreground uppercase leading-none mb-1">
+                                    {isCustomAdd ? "Couleur" : "Match"}
+                                </p>
                                 <h4 className="text-sm font-bold truncate leading-none text-white">
-                                    {activeMatch.pencil.name}
+                                    {isCustomAdd ? "Nouveau Crayon" : activeMatch.pencil.name}
                                 </h4>
                             </div>
                             <button className="p-1.5 bg-white/10 rounded-full text-white">
@@ -168,28 +174,36 @@ export function ColorResult({ color, match, alternatives, drawingId, onConfirm, 
                                 <div className="flex-1 min-w-0 pt-1">
                                     <div className="flex justify-between items-center mb-1">
                                         <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                                            {overrideMatch ? "Alternative" : "Meilleur Match"}
+                                            {isCustomAdd ? "Couleur sélectionnée" : (overrideMatch ? "Alternative" : "Meilleur Match")}
                                         </span>
-                                        <div className="flex items-center gap-2">
-                                            <span className={cn("text-xs font-bold", confidenceColor)}>
-                                                {activeMatch.confidence}%
-                                            </span>
+                                        {!isCustomAdd && (
+                                            <div className="flex items-center gap-2">
+                                                <span className={cn("text-xs font-bold", confidenceColor)}>
+                                                    {activeMatch.confidence}%
+                                                </span>
+                                                <button onClick={() => setIsCollapsed(true)} className="text-muted-foreground hover:text-white transition-colors">
+                                                    <ChevronDown size={18} />
+                                                </button>
+                                            </div>
+                                        )}
+                                        {isCustomAdd && (
                                             <button onClick={() => setIsCollapsed(true)} className="text-muted-foreground hover:text-white transition-colors">
                                                 <ChevronDown size={18} />
                                             </button>
-                                        </div>
+                                        )}
                                     </div>
 
                                     <h3 className="text-xl font-black leading-tight mb-0.5 truncate uppercase text-white">
-                                        {activeMatch.pencil.name}
+                                        {isCustomAdd ? "Nouveau Crayon" : activeMatch.pencil.name}
                                     </h3>
                                     <div className="flex items-center justify-between mb-3">
                                         <p className="text-xs text-muted-foreground font-bold uppercase tracking-wide">
-                                            {activeMatch.pencil.brand} • <span className="text-white/80">{activeMatch.pencil.id}</span>
+                                            {isCustomAdd ? "Prêt à être ajouté" : `${activeMatch.pencil.brand} • `}
+                                            {!isCustomAdd && <span className="text-white/80">{activeMatch.pencil.id}</span>}
                                         </p>
                                         
                                         {/* Bouton de suppression si favori */}
-                                        {favorite && (
+                                        {!isCustomAdd && favorite && (
                                             <button 
                                                 onClick={toggleFavorite}
                                                 className="p-1.5 text-rose-500 hover:bg-rose-500/10 rounded-lg transition-colors"
@@ -200,23 +214,25 @@ export function ColorResult({ color, match, alternatives, drawingId, onConfirm, 
                                         )}
                                     </div>
 
-                                    <button
-                                        onClick={handleToggleInventory}
-                                        className={cn(
-                                            "w-full flex items-center justify-center gap-2 py-2.5 rounded-xl font-bold text-xs transition-all border transform-gpu active:scale-95",
-                                            owned
-                                                ? "bg-green-500/10 text-green-500 border-green-500/20 hover:bg-green-500/20"
-                                                : "bg-primary text-primary-foreground border-transparent hover:bg-primary/90"
-                                        )}
-                                    >
-                                        {owned ? <Check size={16} strokeWidth={3} /> : <Plus size={16} strokeWidth={3} />}
-                                        {owned ? "Dans ma collection" : "Ajouter au stock"}
-                                    </button>
+                                    {!isCustomAdd && (
+                                        <button
+                                            onClick={handleToggleInventory}
+                                            className={cn(
+                                                "w-full flex items-center justify-center gap-2 py-2.5 rounded-xl font-bold text-xs transition-all border transform-gpu active:scale-95",
+                                                owned
+                                                    ? "bg-green-500/10 text-green-500 border-green-500/20 hover:bg-green-500/20"
+                                                    : "bg-primary text-primary-foreground border-transparent hover:bg-primary/90"
+                                            )}
+                                        >
+                                            {owned ? <Check size={16} strokeWidth={3} /> : <Plus size={16} strokeWidth={3} />}
+                                            {owned ? "Dans ma collection" : "Ajouter au stock"}
+                                        </button>
+                                    )}
                                 </div>
                             </div>
 
                             {/* Alternatives (Horizontal Scroll) */}
-                            {alternatives.length > 0 && (
+                            {alternatives.length > 0 && !isCustomAdd && (
                                 <div className="space-y-2">
                                     <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-1">Teintes similaires</p>
                                     <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
@@ -246,38 +262,41 @@ export function ColorResult({ color, match, alternatives, drawingId, onConfirm, 
                             {/* Actions principales */}
                             <div className="flex flex-col gap-3 pt-2">
                                 <div className="flex gap-3">
-                                    {drawingId ? (
-                                        <button
-                                            onClick={async () => {
-                                                await addPencilToDrawing(drawingId, getPencilId(activeMatch.pencil));
-                                                setAddedToDrawing(true);
-                                            }}
-                                            disabled={addedToDrawing}
-                                            className={cn(
-                                                "flex-1 py-4 font-bold rounded-2xl transition-all border flex items-center justify-center gap-2 active:scale-95",
-                                                addedToDrawing
-                                                    ? "bg-green-500/10 text-green-500 border-green-500/20"
-                                                    : "bg-white/10 hover:bg-white/20 text-white border-transparent"
-                                            )}
-                                        >
-                                            {addedToDrawing ? <Check size={20} /> : <Bookmark size={20} />}
-                                            <span>{addedToDrawing ? 'Ajouté' : 'Au dessin'}</span>
-                                        </button>
-                                    ) : (
-                                        <button
-                                            onClick={() => setShowDrawingPicker(true)}
-                                            className="flex-1 py-4 bg-white/10 hover:bg-white/20 text-white font-bold rounded-2xl transition-all border border-transparent flex items-center justify-center gap-2 active:scale-95"
-                                        >
-                                            <Bookmark size={20} />
-                                            <span>Sauver</span>
-                                        </button>
+                                    {!isCustomAdd && (
+                                        drawingId ? (
+                                            <button
+                                                onClick={async () => {
+                                                    await addPencilToDrawing(drawingId, getPencilId(activeMatch.pencil));
+                                                    setAddedToDrawing(true);
+                                                }}
+                                                disabled={addedToDrawing}
+                                                className={cn(
+                                                    "flex-1 py-4 font-bold rounded-2xl transition-all border flex items-center justify-center gap-2 active:scale-95",
+                                                    addedToDrawing
+                                                        ? "bg-green-500/10 text-green-500 border-green-500/20"
+                                                        : "bg-white/10 hover:bg-white/20 text-white border-transparent"
+                                                )}
+                                            >
+                                                {addedToDrawing ? <Check size={20} /> : <Bookmark size={20} />}
+                                                <span>{addedToDrawing ? 'Ajouté' : 'Au dessin'}</span>
+                                            </button>
+                                        ) : (
+                                            <button
+                                                onClick={() => setShowDrawingPicker(true)}
+                                                className="flex-1 py-4 bg-white/10 hover:bg-white/20 text-white font-bold rounded-2xl transition-all border border-transparent flex items-center justify-center gap-2 active:scale-95"
+                                            >
+                                                <Bookmark size={20} />
+                                                <span>Sauver</span>
+                                            </button>
+                                        )
                                     )}
                                     
                                     <button
                                         onClick={handleSaveColor}
                                         disabled={isConfirming || isConfirmed}
                                         className={cn(
-                                            "flex-[1.5] py-4 text-primary-foreground font-black rounded-2xl active:scale-95 transition-all flex items-center justify-center gap-3 shadow-xl",
+                                            "py-4 text-primary-foreground font-black rounded-2xl active:scale-95 transition-all flex items-center justify-center gap-3 shadow-xl",
+                                            isCustomAdd ? "flex-1" : "flex-[1.5]",
                                             isConfirmed 
                                                 ? "bg-green-500 shadow-green-500/30" 
                                                 : "bg-primary shadow-primary/30 hover:bg-primary/90"
@@ -290,7 +309,9 @@ export function ColorResult({ color, match, alternatives, drawingId, onConfirm, 
                                         ) : (
                                             <Check size={24} strokeWidth={4} />
                                         )}
-                                        <span className="text-lg">{isConfirmed ? "ENREGISTRÉ" : "VALIDER"}</span>
+                                        <span className="text-lg">
+                                            {isConfirmed ? "ENREGISTRÉ" : (isCustomAdd ? "CONFIRMER LA COULEUR" : "VALIDER")}
+                                        </span>
                                     </button>
                                 </div>
                             </div>

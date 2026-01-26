@@ -42,7 +42,11 @@ export function InventoryManager() {
     };
 
     if (isScanning) {
-        return <ColorScanner onColorSelected={handleScanColor} onCancel={() => setIsScanning(false)} />;
+        return <ColorScanner 
+            isCustomAdd={true}
+            onColorSelected={handleScanColor} 
+            onCancel={() => setIsScanning(false)} 
+        />;
     }
 
     return (

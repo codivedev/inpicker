@@ -46,9 +46,10 @@ function Magnifier({ sourceCanvas, pixelX, pixelY }: { sourceCanvas: HTMLCanvasE
 interface ColorScannerProps {
     onColorSelected: (hex: string) => void;
     onCancel: () => void;
+    isCustomAdd?: boolean;
 }
 
-export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
+export function ColorScanner({ onColorSelected, onCancel, isCustomAdd }: ColorScannerProps) {
     console.log('ColorScanner component rendered'); // Debug
 
     const navigate = useNavigate();
@@ -600,6 +601,7 @@ export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
                     drawingId={activeDrawingId || undefined}
                     onConfirm={confirmColor}
                     isPicking={!!loupe}
+                    isCustomAdd={isCustomAdd}
                 />
             )}
         </div>
