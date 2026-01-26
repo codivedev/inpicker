@@ -130,7 +130,7 @@ export function useImagePicker(options: UseImagePickerOptions = {}) {
                 const clientY = touchEvent.changedTouches ? touchEvent.changedTouches[0].clientY : (event as any).clientY;
 
                 // Sur smartphone, on décale la loupe au dessus du doigt pour qu'elle ne soit pas cachée
-                const PICK_OFFSET = 100; 
+                const PICK_OFFSET = 80; 
                 const targetY = clientY - PICK_OFFSET;
 
                 const pixelData = getPixelColor(clientX, targetY);

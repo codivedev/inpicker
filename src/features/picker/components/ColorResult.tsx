@@ -126,9 +126,9 @@ export function ColorResult({ color, match, alternatives, drawingId, onConfirm, 
                 className="fixed bottom-0 left-0 right-0 p-4 pb-8 z-30 pointer-events-none"
             >
                 <div className={cn(
-                    "bg-[#121212] border border-white/10 shadow-2xl rounded-3xl mx-auto pointer-events-auto overflow-hidden transition-all duration-300 ease-in-out",
+                    "bg-[#0a0a0a] border border-white/20 shadow-2xl rounded-3xl mx-auto pointer-events-auto overflow-hidden transition-all duration-300 ease-in-out",
                     isCollapsed ? "max-w-[240px] p-2" : "max-w-[95vw] sm:max-w-md p-5",
-                    isPicking && "opacity-60 scale-95 origin-bottom translate-y-4"
+                    isPicking && "opacity-100 scale-95 origin-bottom translate-y-4 shadow-primary/20"
                 )}>
                     {/* Header compact quand réduit */}
                     {isCollapsed && (
