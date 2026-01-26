@@ -128,8 +128,10 @@ export function useInventory() {
         };
     });
 
-    // Fusionner les catalogues (Statique + Custom)
-    const allPencils = [...(pencilsData as Pencil[]), ...customPencils];
+    // Fusionner les catalogues (Statique + Custom) et trier par ID naturellement
+    const allPencils = [...(pencilsData as Pencil[]), ...customPencils].sort((a, b) => {
+        return a.id.localeCompare(b.id, undefined, { numeric: true, sensitivity: 'base' });
+    });
 
     // Grouper les données par marque
     const pencilsByBrand = allPencils.reduce((acc, pencil) => {

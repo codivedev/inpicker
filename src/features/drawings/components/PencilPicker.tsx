@@ -23,9 +23,9 @@ export function PencilPicker({ isOpen, onClose, onSelect, excludedPencilIds = []
         return uniqueBrands.sort();
     }, []);
 
-    // Filtrer les crayons
+    // Filtrer et trier les crayons par ID naturellement
     const filteredPencils = useMemo(() => {
-        return pencilsData.filter(pencil => {
+        const filtered = pencilsData.filter(pencil => {
             const pencilId = `${pencil.brand}-${pencil.id}`;
             if (excludedPencilIds.includes(pencilId)) return false;
             if (selectedBrand && pencil.brand !== selectedBrand) return false;
@@ -38,6 +38,10 @@ export function PencilPicker({ isOpen, onClose, onSelect, excludedPencilIds = []
                 );
             }
             return true;
+        });
+
+        return filtered.sort((a, b) => {
+            return a.id.localeCompare(b.id, undefined, { numeric: true, sensitivity: 'base' });
         });
     }, [search, selectedBrand, excludedPencilIds]);
 
