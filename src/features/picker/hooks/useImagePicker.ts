@@ -108,59 +108,53 @@ export function useImagePicker(options: UseImagePickerOptions = {}) {
         return { x: clientX, y: clientY, color, pixelX: safeX, pixelY: safeY };
     };
 
+    const updateColorAtCenter = () => {
+        if (!isPipetteMode) return;
+        const container = containerRef.current;
+        if (container) {
+            const rect = container.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+
+            const pixelData = getPixelColor(centerX, centerY);
+            if (pixelData) {
+                setLoupe({
+                    x: centerX,
+                    y: centerY,
+                    color: pixelData.color,
+                    pixelX: pixelData.pixelX,
+                    pixelY: pixelData.pixelY
+                });
+                setPickedColor(pixelData.color);
+                
+                const matches = findTopMatches(pixelData.color, 6, {
+                    ownedPencilsIds,
+                    prioritizeOwned: true,
+                    allPencils
+                });
+                setMatchResult(matches.length > 0 ? matches[0] : null);
+                setAlternatives(matches.slice(1));
+            }
+        }
+    };
+
+    useEffect(() => {
+        if (isPipetteMode && imageSrc) {
+            updateColorAtCenter();
+        } else if (!isPipetteMode) {
+            setLoupe(null);
+        }
+    }, [isPipetteMode, imageSrc]);
+
     const bind = useGesture({
-        onDrag: ({ last, event, offset: [x, y], touches, pinching, cancel }) => {
-            if (event.cancelable) event.preventDefault();
-
-            const realTouches = (event as TouchEvent).touches ? (event as TouchEvent).touches.length : touches;
-
-            if (realTouches > 1 || pinching || !isPipetteMode) {
-                if (loupe) setLoupe(null);
-                if (isPipetteMode && realTouches > 1) cancel();
-
-                setTransform(t => ({ ...t, x, y }));
-                return;
-            }
-
-            if (isPipetteMode && realTouches === 1) {
-                const touchEvent = event as TouchEvent;
-                const clientX = touchEvent.changedTouches ? touchEvent.changedTouches[0].clientX : (event as any).clientX;
-                const clientY = touchEvent.changedTouches ? touchEvent.changedTouches[0].clientY : (event as any).clientY;
-
-                // Sur smartphone, on décale la loupe au dessus du doigt pour qu'elle ne soit pas cachée
-                const PICK_OFFSET = 80; 
-                const targetY = clientY - PICK_OFFSET;
-
-                const pixelData = getPixelColor(clientX, targetY);
-                if (pixelData) {
-                    setLoupe({
-                        x: clientX,
-                        y: targetY,
-                        color: pixelData.color,
-                        pixelX: pixelData.pixelX,
-                        pixelY: pixelData.pixelY
-                    });
-
-                    setPickedColor(pixelData.color);
-                    const matches = findTopMatches(pixelData.color, 6, {
-                        ownedPencilsIds,
-                        prioritizeOwned: true,
-                        allPencils
-                    });
-                    setMatchResult(matches.length > 0 ? matches[0] : null);
-                    setAlternatives(matches.slice(1));
-                } else {
-                    setLoupe(prev => prev ? { ...prev, x: clientX, y: targetY } : null);
-                }
-
-                if (last) {
-                    setLoupe(null);
-                }
-            }
+        onDrag: ({ offset: [x, y] }) => {
+            // Toujours permettre le déplacement (pan) de l'image
+            setTransform(t => ({ ...t, x, y }));
+            updateColorAtCenter();
         },
         onPinch: ({ offset: [s], memo }) => {
-            if (loupe) setLoupe(null);
             setTransform(t => ({ ...t, scale: s }));
+            updateColorAtCenter();
             return memo;
         },
     }, {

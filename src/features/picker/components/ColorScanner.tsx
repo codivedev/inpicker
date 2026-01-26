@@ -383,14 +383,14 @@ export function ColorScanner({ onColorSelected, onCancel, isCustomAdd }: ColorSc
                     >
                         {/* LOUPE */}
                         <AnimatePresence>
-                            {loupe && (
+                            {isPipetteMode && loupe && (
                                 <motion.div
                                     initial={{ scale: 0, opacity: 0 }}
                                     animate={{ scale: 1, opacity: 1 }}
                                     exit={{ scale: 0, opacity: 0 }}
                                     style={{
-                                        left: loupe.x,
-                                        top: loupe.y - 20, // Ajustement visuel pour le centre de la loupe
+                                        left: '50%',
+                                        top: '50%',
                                     }}
                                     className="absolute z-20 pointer-events-none -translate-x-1/2 -translate-y-1/2"
                                 >
