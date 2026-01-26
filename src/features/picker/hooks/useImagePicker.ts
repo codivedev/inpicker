@@ -52,7 +52,6 @@ export function useImagePicker(options: UseImagePickerOptions = {}) {
             setMatchResult(null);
             setAlternatives([]);
             setLoupe(null);
-            setIsPipetteMode(false);
         }
     }, [options.initialImage, imageSrc]);
 
@@ -67,7 +66,6 @@ export function useImagePicker(options: UseImagePickerOptions = {}) {
                     setTransform({ x: 0, y: 0, scale: 1 });
                     setPickedColor(null);
                     setMatchResult(null);
-                    setIsPipetteMode(false);
                 }
             };
             reader.readAsDataURL(file);

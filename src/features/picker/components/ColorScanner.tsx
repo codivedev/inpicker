@@ -5,7 +5,7 @@ import { useDrawings } from '@/features/drawings/hooks/useDrawings';
 import { cloudflareApi } from '@/lib/cloudflare-api';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
-import { RotateCcw, Plus, Save, History } from 'lucide-react';
+import { RotateCcw, Plus, Save, History, Pipette } from 'lucide-react';
 import { useImagePicker } from '../hooks/useImagePicker';
 import { ColorResult } from './ColorResult';
 
@@ -78,7 +78,9 @@ export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
         bindGestures,
         refs,
         onImageLoad,
-        resetView
+        resetView,
+        isPipetteMode,
+        togglePipetteMode
     } = useImagePicker();
 
     const handleImageUploadWrapper = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -294,16 +296,44 @@ export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
                         <History size={24} />
                     </button>
                     {imageSrc && (
-                        <button
-                            onClick={resetView}
-                            className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors backdrop-blur-md"
-                            title="Réinitialiser"
-                        >
-                            <RotateCcw size={20} />
-                        </button>
+                        <>
+                            <button
+                                onClick={togglePipetteMode}
+                                className={cn(
+                                    "p-2 rounded-full transition-colors backdrop-blur-md",
+                                    isPipetteMode ? "bg-primary text-primary-foreground" : "bg-white/10 hover:bg-white/20"
+                                )}
+                                title="Pipette"
+                            >
+                                <Pipette size={20} />
+                            </button>
+                            <button
+                                onClick={resetView}
+                                className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors backdrop-blur-md"
+                                title="Réinitialiser"
+                            >
+                                <RotateCcw size={20} />
+                            </button>
+                        </>
                     )}
                 </div>
             </div>
+
+            {/* Pipette Mode Indicator */}
+            <AnimatePresence>
+                {isPipetteMode && imageSrc && !loupe && (
+                    <div className="absolute top-20 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
+                        <motion.div
+                            initial={{ y: -20, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            exit={{ y: -20, opacity: 0 }}
+                            className="bg-primary/90 text-primary-foreground px-4 py-2 rounded-full text-sm font-bold shadow-lg backdrop-blur-md flex items-center gap-2"
+                        >
+                            <Pipette size={16} /> Mode Pipette
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
 
             {/* Main Area */}
             <div className="flex-1 flex items-center justify-center overflow-hidden bg-black relative">
@@ -344,7 +374,10 @@ export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
                 ) : (
                     <div
                         ref={refs.containerRef}
-                        className="relative w-full h-full flex items-center justify-center touch-none overflow-hidden"
+                        className={cn(
+                            "relative w-full h-full flex items-center justify-center touch-none overflow-hidden",
+                            isPipetteMode ? "cursor-crosshair" : "cursor-move"
+                        )}
                         {...bindGestures()}
                     >
                         {/* LOUPE */}
