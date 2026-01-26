@@ -299,7 +299,7 @@ const handleSaveDrawing = async () => {
                             left: loupe.x,
                             top: loupe.y - 20, 
                         }}
-                        className="fixed z-50 pointer-events-none -translate-x-1/2 -translate-y-1/2"
+                        className="fixed z-20 pointer-events-none -translate-x-1/2 -translate-y-1/2"
 
                     >
                         <div className="relative">

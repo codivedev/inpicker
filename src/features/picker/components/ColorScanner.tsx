@@ -356,9 +356,9 @@ export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
                                     exit={{ scale: 0, opacity: 0 }}
                                     style={{
                                         left: loupe.x,
-                                        top: loupe.y - 20,
+                                        top: loupe.y - 20, // Ajustement visuel pour le centre de la loupe
                                     }}
-                                    className="absolute z-50 pointer-events-none -translate-x-1/2 -translate-y-1/2"
+                                    className="absolute z-20 pointer-events-none -translate-x-1/2 -translate-y-1/2"
                                 >
                                     <div className="relative">
                                         {/* Magnifier glass */}

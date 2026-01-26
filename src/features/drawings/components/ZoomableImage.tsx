@@ -250,7 +250,7 @@ export function ZoomableImage({ src, alt, onColorPick, className }: ZoomableImag
                             left: loupe.x,
                             top: loupe.y - 80, // Décalé vers le haut pour voir sous le doigt
                         }}
-                        className="absolute z-50 pointer-events-none -translate-x-1/2 -translate-y-1/2"
+                        className="absolute z-20 pointer-events-none -translate-x-1/2 -translate-y-1/2"
                     >
                         <div className="relative">
                             {/* Magnifier glass */}
