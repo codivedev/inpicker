@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { getPencilId } from '@/lib/color-utils';
 import type { MatchResult } from '@/lib/color-utils';
 import { useInventory } from '@/features/inventory/hooks/useInventory';
-import { Check, Bookmark, Plus, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
+import { Check, Bookmark, Plus, ChevronDown, ChevronUp, Loader2, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DrawingPicker } from '@/features/drawings/components/DrawingPicker';
 import { useFavorites } from '@/hooks/useFavorites';
@@ -126,7 +126,7 @@ export function ColorResult({ color, match, alternatives, drawingId, onConfirm, 
                 className="fixed bottom-0 left-0 right-0 p-4 pb-8 z-30 pointer-events-none"
             >
                 <div className={cn(
-                    "bg-card/95 backdrop-blur-xl border shadow-2xl rounded-3xl mx-auto pointer-events-auto overflow-hidden transition-all duration-300 ease-in-out",
+                    "bg-[#121212] border border-white/10 shadow-2xl rounded-3xl mx-auto pointer-events-auto overflow-hidden transition-all duration-300 ease-in-out",
                     isCollapsed ? "max-w-[240px] p-2" : "max-w-[95vw] sm:max-w-md p-5",
                     isPicking && "opacity-60 scale-95 origin-bottom translate-y-4"
                 )}>
@@ -136,11 +136,11 @@ export function ColorResult({ color, match, alternatives, drawingId, onConfirm, 
                             <div className="w-10 h-10 rounded-xl border-2 border-white/20 shadow-inner shrink-0" style={{ backgroundColor: color }} />
                             <div className="flex-1 min-w-0">
                                 <p className="text-[10px] font-bold text-muted-foreground uppercase leading-none mb-1">Match</p>
-                                <h4 className="text-sm font-bold truncate leading-none">
+                                <h4 className="text-sm font-bold truncate leading-none text-white">
                                     {activeMatch.pencil.name}
                                 </h4>
                             </div>
-                            <button className="p-1.5 bg-secondary rounded-full">
+                            <button className="p-1.5 bg-white/10 rounded-full text-white">
                                 <ChevronUp size={16} />
                             </button>
                         </div>
@@ -154,11 +154,13 @@ export function ColorResult({ color, match, alternatives, drawingId, onConfirm, 
                                     <div
                                         className="w-20 h-20 rounded-2xl border-2 border-white/20 shadow-inner flex-shrink-0 relative group cursor-pointer"
                                         style={{ backgroundColor: color }}
-                                        onClick={toggleFavorite}
                                     >
-                                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 rounded-2xl">
-                                            <Bookmark size={24} fill={favorite ? "white" : "none"} className="text-white" />
-                                        </div>
+                                        {/* Overlay discret si déjà favori */}
+                                        {favorite && (
+                                            <div className="absolute -top-2 -right-2 bg-rose-500 text-white p-1 rounded-full shadow-lg z-10">
+                                                <Bookmark size={12} fill="white" />
+                                            </div>
+                                        )}
                                     </div>
                                     <span className="text-[10px] font-mono text-muted-foreground uppercase">{color}</span>
                                 </div>
@@ -168,29 +170,42 @@ export function ColorResult({ color, match, alternatives, drawingId, onConfirm, 
                                         <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
                                             {overrideMatch ? "Alternative" : "Meilleur Match"}
                                         </span>
-                                        <div className="flex items-center gap-1.5">
+                                        <div className="flex items-center gap-2">
                                             <span className={cn("text-xs font-bold", confidenceColor)}>
                                                 {activeMatch.confidence}%
                                             </span>
-                                            <button onClick={() => setIsCollapsed(true)} className="text-muted-foreground hover:text-foreground">
+                                            <button onClick={() => setIsCollapsed(true)} className="text-muted-foreground hover:text-white transition-colors">
                                                 <ChevronDown size={18} />
                                             </button>
                                         </div>
                                     </div>
 
-                                    <h3 className="text-xl font-black leading-tight mb-0.5 truncate uppercase">
+                                    <h3 className="text-xl font-black leading-tight mb-0.5 truncate uppercase text-white">
                                         {activeMatch.pencil.name}
                                     </h3>
-                                    <p className="text-xs text-muted-foreground font-bold uppercase tracking-wide mb-3">
-                                        {activeMatch.pencil.brand} • <span className="text-foreground">{activeMatch.pencil.id}</span>
-                                    </p>
+                                    <div className="flex items-center justify-between mb-3">
+                                        <p className="text-xs text-muted-foreground font-bold uppercase tracking-wide">
+                                            {activeMatch.pencil.brand} • <span className="text-white/80">{activeMatch.pencil.id}</span>
+                                        </p>
+                                        
+                                        {/* Bouton de suppression si favori */}
+                                        {favorite && (
+                                            <button 
+                                                onClick={toggleFavorite}
+                                                className="p-1.5 text-rose-500 hover:bg-rose-500/10 rounded-lg transition-colors"
+                                                title="Supprimer des favoris"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        )}
+                                    </div>
 
                                     <button
                                         onClick={handleToggleInventory}
                                         className={cn(
-                                            "w-full flex items-center justify-center gap-2 py-2.5 rounded-xl font-bold text-xs transition-all border-2 transform-gpu active:scale-95",
+                                            "w-full flex items-center justify-center gap-2 py-2.5 rounded-xl font-bold text-xs transition-all border transform-gpu active:scale-95",
                                             owned
-                                                ? "bg-green-500/10 text-green-600 border-green-500/20 hover:bg-green-500/20"
+                                                ? "bg-green-500/10 text-green-500 border-green-500/20 hover:bg-green-500/20"
                                                 : "bg-primary text-primary-foreground border-transparent hover:bg-primary/90"
                                         )}
                                     >
@@ -212,12 +227,12 @@ export function ColorResult({ color, match, alternatives, drawingId, onConfirm, 
                                                 className={cn(
                                                     "flex-shrink-0 w-28 p-2 rounded-2xl border transition-all text-left",
                                                     activeMatch.pencil.id === alt.pencil.id
-                                                        ? "bg-primary/5 border-primary/30 ring-1 ring-primary/20"
-                                                        : "bg-secondary/30 border-transparent hover:border-border"
+                                                        ? "bg-primary/10 border-primary/40 ring-1 ring-primary/20"
+                                                        : "bg-white/5 border-transparent hover:border-white/10"
                                                 )}
                                             >
                                                 <div className="w-full h-10 rounded-lg mb-2 border border-white/10" style={{ backgroundColor: alt.pencil.hex }} />
-                                                <p className="text-[10px] font-bold truncate mb-0.5">{alt.pencil.name}</p>
+                                                <p className="text-[10px] font-bold truncate mb-0.5 text-white">{alt.pencil.name}</p>
                                                 <div className="flex justify-between items-center">
                                                     <span className="text-[9px] text-muted-foreground uppercase">{alt.pencil.id}</span>
                                                     {isOwned(alt.pencil) && <Check size={10} className="text-green-500" strokeWidth={3} />}
@@ -241,8 +256,8 @@ export function ColorResult({ color, match, alternatives, drawingId, onConfirm, 
                                             className={cn(
                                                 "flex-1 py-4 font-bold rounded-2xl transition-all border flex items-center justify-center gap-2 active:scale-95",
                                                 addedToDrawing
-                                                    ? "bg-green-500/10 text-green-600 border-green-500/20"
-                                                    : "bg-secondary/50 hover:bg-secondary text-foreground border-transparent hover:border-border"
+                                                    ? "bg-green-500/10 text-green-500 border-green-500/20"
+                                                    : "bg-white/10 hover:bg-white/20 text-white border-transparent"
                                             )}
                                         >
                                             {addedToDrawing ? <Check size={20} /> : <Bookmark size={20} />}
@@ -251,10 +266,10 @@ export function ColorResult({ color, match, alternatives, drawingId, onConfirm, 
                                     ) : (
                                         <button
                                             onClick={() => setShowDrawingPicker(true)}
-                                            className="flex-1 py-4 bg-secondary/50 hover:bg-secondary text-foreground font-bold rounded-2xl transition-all border border-transparent hover:border-border flex items-center justify-center gap-2 active:scale-95"
+                                            className="flex-1 py-4 bg-white/10 hover:bg-white/20 text-white font-bold rounded-2xl transition-all border border-transparent flex items-center justify-center gap-2 active:scale-95"
                                         >
                                             <Bookmark size={20} />
-                                            <span>Dessin</span>
+                                            <span>Sauver</span>
                                         </button>
                                     )}
                                     

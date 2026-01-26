@@ -15,12 +15,12 @@ function Magnifier({ sourceCanvas, pixelX, pixelY }: { sourceCanvas: HTMLCanvasE
 
     useEffect(() => {
         if (!sourceCanvas || !canvasRef.current) return;
-        const ctx = canvasRef.current.getContext('2d');
+        const ctx = canvasRef.current.getContext('2d', { willReadFrequently: true });
         if (!ctx) return;
 
-        // On dessine une zone de 11x11 pixels centrée sur pixelX, pixelY
-        // pour un effet de zoom "pixel art"
-        const size = 11;
+        // On dessine une zone de 21x21 pixels centrée sur pixelX, pixelY
+        // pour un effet de zoom plus large
+        const size = 21;
         const offset = Math.floor(size / 2);
         
         ctx.imageSmoothingEnabled = false;

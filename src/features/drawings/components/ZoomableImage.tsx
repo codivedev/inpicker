@@ -10,10 +10,10 @@ function Magnifier({ sourceCanvas, pixelX, pixelY }: { sourceCanvas: HTMLCanvasE
 
     useEffect(() => {
         if (!sourceCanvas || !canvasRef.current) return;
-        const ctx = canvasRef.current.getContext('2d');
+        const ctx = canvasRef.current.getContext('2d', { willReadFrequently: true });
         if (!ctx) return;
 
-        const size = 11;
+        const size = 21;
         const offset = Math.floor(size / 2);
         
         ctx.imageSmoothingEnabled = false;
@@ -60,11 +60,11 @@ export function ZoomableImage({ src, alt, onColorPick, className }: ZoomableImag
         const handleLoad = () => {
             canvas.width = image.naturalWidth;
             canvas.height = image.naturalHeight;
-            const ctx = canvas.getContext('2d');
-            if (ctx) {
-                ctx.drawImage(image, 0, 0);
-            }
-        };
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        if (ctx) {
+            ctx.drawImage(image, 0, 0);
+        }
+    };
 
         if (image.complete) {
             handleLoad();
@@ -281,15 +281,6 @@ export function ZoomableImage({ src, alt, onColorPick, className }: ZoomableImag
                     </motion.div>
                 )}
             </AnimatePresence>
-
-            {/* Indicator Toast (Pipette Mode Active) */}
-            {isPipetteMode && !loupe && (
-                <div className="absolute top-4 left-4 z-20 pointer-events-none">
-                    <div className="bg-primary/90 text-primary-foreground px-4 py-2 rounded-full text-xs font-bold shadow-lg backdrop-blur-md">
-                        MODE PIPETTE
-                    </div>
-                </div>
-            )}
 
             {/* Image & Interaction Layer */}
             <div
