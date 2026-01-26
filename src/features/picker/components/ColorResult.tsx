@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { getPencilId } from '@/lib/color-utils';
 import type { MatchResult } from '@/lib/color-utils';
 import { useInventory } from '@/features/inventory/hooks/useInventory';
-import { Check, Bookmark, Plus, ChevronDown, ChevronUp } from 'lucide-react';
+import { Check, Bookmark, Plus, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DrawingPicker } from '@/features/drawings/components/DrawingPicker';
 import { useFavorites } from '@/hooks/useFavorites';
@@ -25,6 +25,8 @@ export function ColorResult({ color, match, alternatives, drawingId, onConfirm, 
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [showDrawingPicker, setShowDrawingPicker] = useState(false);
     const [addedToDrawing, setAddedToDrawing] = useState(false);
+    const [isConfirming, setIsConfirming] = useState(false);
+    const [isConfirmed, setIsConfirmed] = useState(false);
     const [overrideMatch, setOverrideMatch] = useState<MatchResult | null>(null);
 
     // Ré-agrandir si une nouvelle couleur est pickée (mais pas pendant le drag)
@@ -37,12 +39,51 @@ export function ColorResult({ color, match, alternatives, drawingId, onConfirm, 
             }
             setOverrideMatch(null);
             setAddedToDrawing(false);
+            setIsConfirmed(false);
+            setIsConfirming(false);
         }
     }, [color, isPicking]);
 
     const activeMatch = overrideMatch || match;
 
     const favorite = isFavorite(color || '');
+
+    const handleSaveColor = async () => {
+        if (!color || !activeMatch || isConfirming || isConfirmed) return;
+        
+        setIsConfirming(true);
+        try {
+            // 1. Toujours ajouter aux favoris par défaut pour ne rien perdre
+            if (!favorite) {
+                await addFavorite({
+                    id: color,
+                    hex: color,
+                    name: activeMatch.pencil.name,
+                    brand: activeMatch.pencil.brand,
+                    pencilId: getPencilId(activeMatch.pencil)
+                });
+            }
+
+            // 2. Si on a un drawingId, on l'ajoute au dessin
+            if (drawingId) {
+                await addPencilToDrawing(drawingId, getPencilId(activeMatch.pencil));
+                setAddedToDrawing(true);
+            }
+
+            setIsConfirmed(true);
+            
+            // 3. Appeler onConfirm après un court délai pour laisser voir le feedback
+            if (onConfirm) {
+                setTimeout(() => {
+                    onConfirm();
+                }, 600);
+            }
+        } catch (error) {
+            console.error("Erreur de sauvegarde:", error);
+        } finally {
+            setIsConfirming(false);
+        }
+    };
 
     const toggleFavorite = async (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -85,7 +126,7 @@ export function ColorResult({ color, match, alternatives, drawingId, onConfirm, 
                 className="fixed bottom-0 left-0 right-0 p-4 pb-8 z-30 pointer-events-none"
             >
                 <div className={cn(
-                    "bg-card border shadow-2xl rounded-3xl mx-auto pointer-events-auto overflow-hidden transition-all duration-300 ease-in-out",
+                    "bg-card/95 backdrop-blur-xl border shadow-2xl rounded-3xl mx-auto pointer-events-auto overflow-hidden transition-all duration-300 ease-in-out",
                     isCollapsed ? "max-w-[240px] p-2" : "max-w-[95vw] sm:max-w-md p-5",
                     isPicking && "opacity-60 scale-95 origin-bottom translate-y-4"
                 )}>
@@ -217,15 +258,25 @@ export function ColorResult({ color, match, alternatives, drawingId, onConfirm, 
                                         </button>
                                     )}
                                     
-                                    {onConfirm && (
-                                        <button
-                                            onClick={onConfirm}
-                                            className="flex-[1.5] py-4 bg-primary text-primary-foreground font-black rounded-2xl hover:bg-primary/90 active:scale-95 transition-all flex items-center justify-center gap-3 shadow-xl shadow-primary/30"
-                                        >
+                                    <button
+                                        onClick={handleSaveColor}
+                                        disabled={isConfirming || isConfirmed}
+                                        className={cn(
+                                            "flex-[1.5] py-4 text-primary-foreground font-black rounded-2xl active:scale-95 transition-all flex items-center justify-center gap-3 shadow-xl",
+                                            isConfirmed 
+                                                ? "bg-green-500 shadow-green-500/30" 
+                                                : "bg-primary shadow-primary/30 hover:bg-primary/90"
+                                        )}
+                                    >
+                                        {isConfirming ? (
+                                            <Loader2 className="animate-spin" size={24} />
+                                        ) : isConfirmed ? (
                                             <Check size={24} strokeWidth={4} />
-                                            <span className="text-lg">VALIDER</span>
-                                        </button>
-                                    )}
+                                        ) : (
+                                            <Check size={24} strokeWidth={4} />
+                                        )}
+                                        <span className="text-lg">{isConfirmed ? "ENREGISTRÉ" : "VALIDER"}</span>
+                                    </button>
                                 </div>
                             </div>
                         </div>

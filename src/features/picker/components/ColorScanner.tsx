@@ -558,34 +558,13 @@ export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
                 )}
             </AnimatePresence>
 
-            {/* Footer / Confirm - Only show if no match or manually hidden */}
-            {pickedColor && !matchResult && (
-                <div className="p-6 bg-black/80 backdrop-blur-md absolute bottom-0 left-0 right-0 pb-10 border-t border-white/10">
-                    <div className="flex items-center justify-between gap-4">
-                        <div className="flex items-center gap-3">
-                            <div
-                                className="w-12 h-12 rounded-full border-2 border-white shadow-lg"
-                                style={{ backgroundColor: pickedColor }}
-                            />
-                            <div className="text-white font-mono text-lg">{pickedColor}</div>
-                        </div>
-                        <button
-                            onClick={confirmColor}
-                            className="flex-1 py-3 bg-white text-black font-bold rounded-xl hover:bg-white/90 active:scale-95 transition-all flex items-center justify-center gap-2"
-                        >
-                            <Check size={20} />
-                            Valider
-                        </button>
-                    </div>
-                </div>
-            )}
-
             {/* Color Result Component */}
             {pickedColor && matchResult && (
                 <ColorResult
                     color={pickedColor}
                     match={matchResult}
                     alternatives={alternatives}
+                    drawingId={activeDrawingId || undefined}
                     onConfirm={confirmColor}
                     isPicking={!!loupe}
                 />

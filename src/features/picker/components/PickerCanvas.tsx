@@ -7,7 +7,6 @@ import { cn } from '@/lib/utils';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useImagePicker } from '../hooks/useImagePicker';
 import { ColorResult } from './ColorResult';
-import { PremiumToolDrawer } from './PremiumToolDrawer';
 
 // Composant pour le rendu zoomé de la loupe
 function Magnifier({ sourceCanvas, pixelX, pixelY }: { sourceCanvas: HTMLCanvasElement | null, pixelX: number, pixelY: number }) {
@@ -337,6 +336,7 @@ const handleSaveDrawing = async () => {
                 color={pickedColor}
                 match={matchResult}
                 alternatives={alternatives}
+                drawingId={activeDrawingId || undefined}
                 onConfirm={confirmColor}
                 isPicking={!!loupe}
             />
@@ -454,9 +454,6 @@ const handleSaveDrawing = async () => {
                     </div>
                 )}
             </AnimatePresence>
-
-            {/* Premium Tool Drawer */}
-            <PremiumToolDrawer />
         </div>
     );
 }
