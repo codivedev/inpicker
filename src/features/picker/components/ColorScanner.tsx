@@ -18,9 +18,9 @@ function Magnifier({ sourceCanvas, pixelX, pixelY }: { sourceCanvas: HTMLCanvasE
         const ctx = canvasRef.current.getContext('2d', { willReadFrequently: true });
         if (!ctx) return;
 
-        // On dessine une zone de 31x31 pixels centrée sur pixelX, pixelY
-        // pour un effet de zoom encore plus large (plus de contexte)
-        const size = 31;
+        // On dessine une zone de 15x15 pixels centrée sur pixelX, pixelY
+        // Cela permet de voir moins de pixels mais de les voir plus gros (meilleur zoom)
+        const size = 15;
         const offset = Math.floor(size / 2);
         
         ctx.imageSmoothingEnabled = false;

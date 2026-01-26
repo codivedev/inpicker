@@ -13,7 +13,7 @@ function Magnifier({ sourceCanvas, pixelX, pixelY }: { sourceCanvas: HTMLCanvasE
         const ctx = canvasRef.current.getContext('2d', { willReadFrequently: true });
         if (!ctx) return;
 
-        const size = 31;
+        const size = 15;
         const offset = Math.floor(size / 2);
         
         ctx.imageSmoothingEnabled = false;
