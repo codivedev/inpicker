@@ -1,14 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Plus, Trash2, Image as ImageIcon, Pencil, Search, Loader2 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useDrawings, useDrawing } from '../hooks/useDrawings';
 import { cloudflareApi } from '@/lib/cloudflare-api';
 import { findTopMatches } from '@/lib/color-utils';
-import pencilsData from '@/data/pencils.json';
 import { PencilPicker } from './PencilPicker';
 import { ZoomableImage } from './ZoomableImage';
 import { X } from 'lucide-react';
+import { useInventory } from '@/features/inventory/hooks/useInventory';
+import type { Pencil as PencilType } from '@/types/pencil';
+
 
 export function DrawingDetail() {
     const navigate = useNavigate();
@@ -17,6 +19,9 @@ export function DrawingDetail() {
 
     const { deleteDrawing, removePencilFromDrawing, updateDrawingImage, addPencilToDrawing, updateDrawing } = useDrawings();
     const { data: drawing, isLoading, error } = useDrawing(drawingId);
+    const { pencilsByBrand } = useInventory();
+
+    const allPencils = useMemo(() => Object.values(pencilsByBrand).flat(), [pencilsByBrand]);
 
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [showPencilPicker, setShowPencilPicker] = useState(false);
@@ -68,8 +73,9 @@ export function DrawingDetail() {
 
         const brand = pencilId.substring(0, lastSepIndex);
         const number = pencilId.substring(lastSepIndex + 1);
-        return pencilsData.find(p => p.brand === brand && p.id === number);
+        return allPencils.find((p: PencilType) => p.brand === brand && p.id === number);
     }).filter(Boolean);
+
 
     const handleDelete = async () => {
         deleteDrawing(drawingId);
@@ -104,7 +110,7 @@ export function DrawingDetail() {
     const imageUrl = drawing.image_r2_key ? cloudflareApi.getImageUrl(drawing.image_r2_key) : null;
 
     const handleColorPick = (hex: string) => {
-        const matches = findTopMatches(hex, 1);
+        const matches = findTopMatches(hex, 1, { allPencils });
         if (matches.length > 0) {
             setPickedColor({ hex, matchedPencil: matches[0].pencil });
         }

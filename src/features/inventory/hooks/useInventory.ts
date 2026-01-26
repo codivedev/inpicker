@@ -8,6 +8,7 @@ interface InventoryItem {
     brand: string;
     number: string;
     is_owned: number;
+    is_hidden: number;
 }
 
 interface CustomPencilItem {
@@ -72,11 +73,17 @@ export function useInventory() {
 
             queryClient.setQueryData<InventoryItem[]>(['inventory'], (old = []) => {
                 if (isCurrentlyOwned) {
-                    // Retirer de la liste
-                    return old.filter(item => item.id !== id);
+                    // Retirer le flag is_owned mais garder l'item s'il est caché (ou simplement filtrer si on s'en fiche)
+                    // En fait, on peut simplement mettre à jour l'item dans la liste
+                    return old.map(item => item.id === id ? { ...item, is_owned: 0 } : item);
                 } else {
-                    // Ajouter à la liste
-                    return [...old, { id, brand: pencil.brand, number: pencil.id, is_owned: 1 }];
+                    // Ajouter ou mettre à jour
+                    const exists = old.some(item => item.id === id);
+                    if (exists) {
+                        return old.map(item => item.id === id ? { ...item, is_owned: 1 } : item);
+                    } else {
+                        return [...old, { id, brand: pencil.brand, number: pencil.id, is_owned: 1, is_hidden: 0 }];
+                    }
                 }
             });
 
@@ -150,6 +157,22 @@ export function useInventory() {
         }
     });
 
+    // Mutation pour cacher un crayon (même statique)
+    const hideMutation = useMutation({
+        mutationFn: async (pencil: Pencil) => {
+            const id = `${pencil.brand}|${pencil.id}`;
+            return cloudflareApi.updatePencil({
+                id,
+                brand: pencil.brand,
+                number: pencil.id,
+                isHidden: true
+            });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['inventory'] });
+        }
+    });
+
     const togglePencil = (pencil: Pencil) => {
         toggleMutation.mutate(pencil);
     };
@@ -172,6 +195,10 @@ export function useInventory() {
 
     const deleteCustomBrand = async (id: string) => {
         await deleteBrandMutation.mutateAsync(id);
+    };
+
+    const hidePencil = async (pencil: Pencil) => {
+        await hideMutation.mutateAsync(pencil);
     };
 
     const isOwned = (pencil: Pencil): boolean => {
@@ -197,9 +224,14 @@ export function useInventory() {
     });
 
     // Fusionner les catalogues (Statique + Custom) et trier par ID naturellement
-    const allPencils = [...(pencilsData as Pencil[]), ...customPencils].sort((a, b) => {
-        return a.id.localeCompare(b.id, undefined, { numeric: true, sensitivity: 'base' });
-    });
+    const allPencils = [...(pencilsData as Pencil[]), ...customPencils]
+        .filter(p => {
+            const id = `${p.brand}|${p.id}`;
+            return !inventoryData.some(item => item.id === id && item.is_hidden === 1);
+        })
+        .sort((a, b) => {
+            return a.id.localeCompare(b.id, undefined, { numeric: true, sensitivity: 'base' });
+        });
 
     // Grouper les données par marque
     const pencilsByBrand = allPencils.reduce((acc, pencil) => {
@@ -208,8 +240,8 @@ export function useInventory() {
         return acc;
     }, {} as Record<string, Pencil[]>);
 
-    // Calculer le nombre de crayons possédés
-    const ownedCount = inventoryData.filter(item => item.is_owned === 1).length;
+    // Calculer le nombre de crayons possédés (en ignorant les cachés)
+    const ownedCount = inventoryData.filter(item => item.is_owned === 1 && item.is_hidden !== 1).length;
 
     return {
         loading: loadingInventory || loadingCustom || loadingBrands,
@@ -219,6 +251,7 @@ export function useInventory() {
         addCustomPencil,
         updateCustomPencil,
         deleteCustomPencil,
+        hidePencil,
         isOwned,
         ownedCount,
         totalCount: allPencils.length,

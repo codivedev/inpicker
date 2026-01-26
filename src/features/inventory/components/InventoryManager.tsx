@@ -15,6 +15,7 @@ export function InventoryManager() {
         addCustomPencil, 
         updateCustomPencil, 
         deleteCustomPencil, 
+        hidePencil,
         isOwned, 
         ownedCount, 
         totalCount,
@@ -60,8 +61,16 @@ export function InventoryManager() {
 
     const handleDeletePencil = async (pencil: Pencil, e: React.MouseEvent) => {
         e.stopPropagation();
-        if (window.confirm(`Supprimer le crayon "${pencil.name}" ?`)) {
-            await deleteCustomPencil(`${pencil.brand}|${pencil.id}`);
+        const message = pencil.isCustom 
+            ? `Supprimer le crayon "${pencil.name}" ?`
+            : `Masquer le crayon "${pencil.name}" de votre collection ?\n\nNote : Vous ne pourrez plus le voir dans la liste.`;
+
+        if (window.confirm(message)) {
+            if (pencil.isCustom) {
+                await deleteCustomPencil(`${pencil.brand}|${pencil.id}`);
+            } else {
+                await hidePencil(pencil);
+            }
         }
     };
 
@@ -250,14 +259,15 @@ export function InventoryManager() {
                                             </div>
                                         </div>
 
-                                        {pencil.isCustom && (
                                             <div className="flex items-center gap-1 ml-2">
-                                                <button
-                                                    onClick={(e) => handleOpenEdit(pencil, e)}
-                                                    className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
-                                                >
-                                                    <Edit2 size={16} />
-                                                </button>
+                                                {pencil.isCustom && (
+                                                    <button
+                                                        onClick={(e) => handleOpenEdit(pencil, e)}
+                                                        className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                                                    >
+                                                        <Edit2 size={16} />
+                                                    </button>
+                                                )}
                                                 <button
                                                     onClick={(e) => handleDeletePencil(pencil, e)}
                                                     className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
@@ -265,7 +275,6 @@ export function InventoryManager() {
                                                     <Trash2 size={16} />
                                                 </button>
                                             </div>
-                                        )}
 
                                         <div className={cn(
                                             "w-6 h-6 rounded-full border-2 ml-2 flex items-center justify-center transition-colors",

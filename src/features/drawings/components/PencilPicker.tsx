@@ -1,8 +1,8 @@
 import { useState, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Search, Check, CheckCircle } from 'lucide-react';
-import pencilsData from '@/data/pencils.json';
 import { useInventory } from '@/features/inventory/hooks/useInventory';
+
 
 interface PencilPickerProps {
     isOpen: boolean;
@@ -15,18 +15,21 @@ export function PencilPicker({ isOpen, onClose, onSelect, excludedPencilIds = []
     const [search, setSearch] = useState('');
     const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
     const [selectedPencils, setSelectedPencils] = useState<string[]>([]);
-    const { isOwned } = useInventory();
+    const { isOwned, pencilsByBrand } = useInventory();
+
+    const allPencils = useMemo(() => Object.values(pencilsByBrand).flat(), [pencilsByBrand]);
 
     // Récupérer les marques uniques
     const brands = useMemo(() => {
-        const uniqueBrands = [...new Set(pencilsData.map(p => p.brand))];
+        const uniqueBrands = Object.keys(pencilsByBrand);
         return uniqueBrands.sort();
-    }, []);
+    }, [pencilsByBrand]);
 
     // Filtrer et trier les crayons par ID naturellement
     const filteredPencils = useMemo(() => {
-        const filtered = pencilsData.filter(pencil => {
-            const pencilId = `${pencil.brand}-${pencil.id}`;
+        const filtered = allPencils.filter(pencil => {
+            const pencilId = `${pencil.brand}|${pencil.id}`;
+
             if (excludedPencilIds.includes(pencilId)) return false;
             if (selectedBrand && pencil.brand !== selectedBrand) return false;
             if (search) {

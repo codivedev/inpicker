@@ -49,7 +49,7 @@ export const cloudflareApi = {
         return res.json();
     },
 
-    async updatePencil(pencil: { id: string, brand: string, number: string, isOwned: boolean }) {
+    async updatePencil(pencil: { id: string, brand: string, number: string, isOwned?: boolean, isHidden?: boolean }) {
         const res = await fetch('/api/inventory', {
             method: 'POST',
             body: JSON.stringify(pencil),
@@ -59,6 +59,7 @@ export const cloudflareApi = {
         if (!res.ok) throw new Error('Erreur lors de la mise à jour');
         return res.json();
     },
+
 
     // ========== CUSTOM PENCILS ==========
     async getCustomPencils() {
