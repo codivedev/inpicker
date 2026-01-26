@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Check, Search, Plus, X, Pipette, Edit2, Trash2 } from 'lucide-react';
+import { ArrowLeft, Check, Search, Plus, X, Pipette, Edit2, Trash2, Tag } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useInventory } from '../hooks/useInventory';
 import { cn } from '@/lib/utils';
@@ -19,10 +19,12 @@ export function InventoryManager() {
         ownedCount, 
         totalCount,
         customBrands,
-        createCustomBrand
+        createCustomBrand,
+        deleteCustomBrand
     } = useInventory();
     const [searchTerm, setSearchTerm] = useState('');
     const [isAddingMode, setIsAddingMode] = useState(false);
+    const [isBrandMode, setIsBrandMode] = useState(false);
     const [isScanning, setIsScanning] = useState(false);
     const [editingPencil, setEditingPencil] = useState<Pencil | null>(null);
 
@@ -33,6 +35,7 @@ export function InventoryManager() {
     const [newHex, setNewHex] = useState('#000000');
     const [isCreatingBrand, setIsCreatingBrand] = useState(false);
     const [newBrandName, setNewBrandName] = useState('');
+    const [brandInput, setBrandInput] = useState('');
 
     const handleOpenAdd = () => {
         setEditingPencil(null);
@@ -93,16 +96,32 @@ export function InventoryManager() {
     };
 
     const handleCreateBrand = async () => {
-        if (!newBrandName.trim()) return;
+        const name = isBrandMode ? brandInput.trim() : newBrandName.trim();
+        if (!name) return;
         
         try {
-            await createCustomBrand(newBrandName.trim());
-            setNewBrand(newBrandName.trim());
-            setIsCreatingBrand(false);
-            setNewBrandName('');
+            await createCustomBrand(name);
+            if (!isBrandMode) {
+                setNewBrand(name);
+                setIsCreatingBrand(false);
+                setNewBrandName('');
+            } else {
+                setBrandInput('');
+            }
         } catch (error) {
             console.error('Failed to create brand:', error);
-            alert('Erreur lors de la création de la marque');
+            alert('Erreur lors de la création de la catégorie');
+        }
+    };
+
+    const handleDeleteBrand = async (id: string, name: string) => {
+        if (window.confirm(`Supprimer la catégorie "${name}" ?\n\nNote : Les crayons associés resteront dans votre inventaire mais ne seront plus regroupés sous cette catégorie.`)) {
+            try {
+                await deleteCustomBrand(id);
+            } catch (error) {
+                console.error('Failed to delete brand:', error);
+                alert('Erreur lors de la suppression');
+            }
         }
     };
 
@@ -135,17 +154,33 @@ export function InventoryManager() {
         <div className="min-h-screen bg-background pb-20 relative">
             {/* Header Sticky */}
             <div className="sticky top-0 z-20 bg-background/80 backdrop-blur-md border-b p-4 flex items-center justify-between">
-                <button
-                    onClick={() => navigate('/tableau-de-bord')}
-                    className="p-2 -ml-2 rounded-full hover:bg-muted/50 transition-colors"
-                >
-                    <ArrowLeft size={24} />
-                </button>
-                <h1 className="text-lg font-bold">Mes Crayons</h1>
-                <div className="text-xs font-medium bg-secondary px-3 py-1 rounded-full">
-                    {ownedCount} / {totalCount}
+                <div className="flex items-center">
+                    <button
+                        onClick={() => navigate('/tableau-de-bord')}
+                        className="p-2 -ml-2 rounded-full hover:bg-muted/50 transition-colors"
+                    >
+                        <ArrowLeft size={24} />
+                    </button>
+                    <h1 className="text-lg font-bold ml-2">Mes Crayons</h1>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => setIsBrandMode(true)}
+                        className="p-2 rounded-full hover:bg-muted/50 transition-colors relative"
+                        title="Gérer les catégories"
+                    >
+                        <Tag size={20} />
+                        {customBrands.length > 0 && (
+                            <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full" />
+                        )}
+                    </button>
+                    <div className="text-xs font-medium bg-secondary px-3 py-1 rounded-full">
+                        {ownedCount} / {totalCount}
+                    </div>
                 </div>
             </div>
+
 
             {/* Search Bar */}
             <div className="p-4 sticky top-[60px] z-20 bg-background/95 pb-2 pt-0">
@@ -392,6 +427,83 @@ export function InventoryManager() {
                 )}
             </AnimatePresence>
 
+            {/* Modal Gestion des Catégories (Marques) */}
+            <AnimatePresence>
+                {isBrandMode && (
+                    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setIsBrandMode(false)}
+                            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                        />
+                        <motion.div
+                            initial={{ y: 100, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            exit={{ y: 100, opacity: 0 }}
+                            className="bg-card w-full max-w-sm rounded-3xl p-6 relative z-10 shadow-2xl border"
+                        >
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="text-xl font-bold">Gérer les catégories</h3>
+                                <button onClick={() => setIsBrandMode(false)} className="p-2 bg-secondary rounded-full">
+                                    <X size={20} />
+                                </button>
+                            </div>
+
+                            <div className="space-y-6">
+                                {/* Ajouter une marque */}
+                                <form onSubmit={(e) => { e.preventDefault(); handleCreateBrand(); }} className="space-y-2">
+                                    <label className="text-sm font-medium text-muted-foreground">Nouvelle catégorie</label>
+                                    <div className="flex gap-2">
+                                        <input
+                                            value={brandInput}
+                                            onChange={(e) => setBrandInput(e.target.value)}
+                                            placeholder="Ex: Marque personnalisée"
+                                            className="flex-1 p-3 rounded-xl bg-secondary/50 border-none outline-none focus:ring-2 focus:ring-primary/50"
+                                        />
+                                        <button
+                                            type="submit"
+                                            className="px-4 py-3 bg-primary text-primary-foreground font-medium rounded-xl hover:bg-primary/90 transition-colors"
+                                        >
+                                            <Plus size={20} />
+                                        </button>
+                                    </div>
+                                </form>
+
+                                {/* Liste des marques personnalisées */}
+                                <div className="space-y-3">
+                                    <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Mes Catégories</h4>
+                                    <div className="max-h-[300px] overflow-y-auto space-y-2 pr-2">
+                                        {customBrands.length === 0 ? (
+                                            <p className="text-sm text-muted-foreground italic p-4 text-center bg-secondary/20 rounded-xl">
+                                                Aucune catégorie personnalisée
+                                            </p>
+                                        ) : (
+                                            customBrands.map((brand: { id: string; name: string }) => (
+                                                <div key={brand.id} className="flex items-center justify-between p-3 bg-secondary/30 rounded-xl group">
+                                                    <span className="font-medium">{brand.name}</span>
+                                                    <button
+                                                        onClick={() => handleDeleteBrand(brand.id, brand.name)}
+                                                        className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                </div>
+
+                                <p className="text-[11px] text-muted-foreground italic leading-relaxed">
+                                    Les catégories par défaut (Polychromos, Luminance, etc.) ne peuvent pas être supprimées.
+                                </p>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }
+
