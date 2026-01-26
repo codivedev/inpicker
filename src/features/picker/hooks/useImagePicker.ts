@@ -30,7 +30,7 @@ export function useImagePicker(options: UseImagePickerOptions = {}) {
     const [loupe, setLoupe] = useState<LoupeState | null>(null);
     const [matchResult, setMatchResult] = useState<MatchResult | null>(null);
     const [alternatives, setAlternatives] = useState<MatchResult[]>([]);
-    const [isPipetteMode, setIsPipetteMode] = useState(false);
+    const [isPipetteMode, setIsPipetteMode] = useState(true);
 
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const containerRef = useRef<HTMLDivElement | null>(null);

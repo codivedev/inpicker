@@ -7,6 +7,7 @@ import { Check, Bookmark, Plus, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DrawingPicker } from '@/features/drawings/components/DrawingPicker';
 import { useFavorites } from '@/hooks/useFavorites';
+import { useDrawings } from '@/features/drawings/hooks/useDrawings';
 
 interface ColorResultProps {
     color: string | null;
@@ -17,11 +18,13 @@ interface ColorResultProps {
     isPicking?: boolean;
 }
 
-export function ColorResult({ color, match, alternatives, onConfirm, isPicking }: ColorResultProps) {
+export function ColorResult({ color, match, alternatives, drawingId, onConfirm, isPicking }: ColorResultProps) {
     const { isOwned, togglePencil } = useInventory();
+    const { addPencilToDrawing } = useDrawings();
     const { addFavorite, removeFavorite, isFavorite } = useFavorites();
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [showDrawingPicker, setShowDrawingPicker] = useState(false);
+    const [addedToDrawing, setAddedToDrawing] = useState(false);
     const [overrideMatch, setOverrideMatch] = useState<MatchResult | null>(null);
 
     // Ré-agrandir si une nouvelle couleur est pickée (mais pas pendant le drag)
@@ -33,6 +36,7 @@ export function ColorResult({ color, match, alternatives, onConfirm, isPicking }
                 setIsCollapsed(false);
             }
             setOverrideMatch(null);
+            setAddedToDrawing(false);
         }
     }, [color, isPicking]);
 
@@ -184,24 +188,45 @@ export function ColorResult({ color, match, alternatives, onConfirm, isPicking }
                             )}
 
                             {/* Actions principales */}
-                            <div className="flex gap-3 pt-2">
-                                <button
-                                    onClick={() => setShowDrawingPicker(true)}
-                                    className="flex-1 py-4 bg-secondary/50 hover:bg-secondary text-foreground font-bold rounded-2xl transition-all border border-transparent hover:border-border flex items-center justify-center gap-2 active:scale-95"
-                                >
-                                    <Bookmark size={20} />
-                                    <span>Dessin</span>
-                                </button>
-                                
-                                {onConfirm && (
-                                    <button
-                                        onClick={onConfirm}
-                                        className="flex-[2] py-4 bg-primary text-primary-foreground font-black rounded-2xl hover:bg-primary/90 active:scale-95 transition-all flex items-center justify-center gap-3 shadow-xl shadow-primary/30"
-                                    >
-                                        <Check size={24} strokeWidth={4} />
-                                        <span className="text-lg">VALIDER</span>
-                                    </button>
-                                )}
+                            <div className="flex flex-col gap-3 pt-2">
+                                <div className="flex gap-3">
+                                    {drawingId ? (
+                                        <button
+                                            onClick={async () => {
+                                                await addPencilToDrawing(drawingId, getPencilId(activeMatch.pencil));
+                                                setAddedToDrawing(true);
+                                            }}
+                                            disabled={addedToDrawing}
+                                            className={cn(
+                                                "flex-1 py-4 font-bold rounded-2xl transition-all border flex items-center justify-center gap-2 active:scale-95",
+                                                addedToDrawing
+                                                    ? "bg-green-500/10 text-green-600 border-green-500/20"
+                                                    : "bg-secondary/50 hover:bg-secondary text-foreground border-transparent hover:border-border"
+                                            )}
+                                        >
+                                            {addedToDrawing ? <Check size={20} /> : <Bookmark size={20} />}
+                                            <span>{addedToDrawing ? 'Ajouté' : 'Au dessin'}</span>
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={() => setShowDrawingPicker(true)}
+                                            className="flex-1 py-4 bg-secondary/50 hover:bg-secondary text-foreground font-bold rounded-2xl transition-all border border-transparent hover:border-border flex items-center justify-center gap-2 active:scale-95"
+                                        >
+                                            <Bookmark size={20} />
+                                            <span>Dessin</span>
+                                        </button>
+                                    )}
+                                    
+                                    {onConfirm && (
+                                        <button
+                                            onClick={onConfirm}
+                                            className="flex-[1.5] py-4 bg-primary text-primary-foreground font-black rounded-2xl hover:bg-primary/90 active:scale-95 transition-all flex items-center justify-center gap-3 shadow-xl shadow-primary/30"
+                                        >
+                                            <Check size={24} strokeWidth={4} />
+                                            <span className="text-lg">VALIDER</span>
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     )}

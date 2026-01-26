@@ -1,11 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
-import { Camera, Check, X, Save, History, Loader2, Image as ImageIcon } from 'lucide-react';
+import { Camera, Check, X, Loader2, Image as ImageIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useDrawings } from '@/features/drawings/hooks/useDrawings';
 import { cloudflareApi } from '@/lib/cloudflare-api';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Pipette, RotateCcw } from 'lucide-react';
+import { RotateCcw, Plus, Save, History } from 'lucide-react';
 import { useImagePicker } from '../hooks/useImagePicker';
 import { ColorResult } from './ColorResult';
 
@@ -78,8 +78,6 @@ export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
         bindGestures,
         refs,
         onImageLoad,
-        isPipetteMode,
-        togglePipetteMode,
         resetView
     } = useImagePicker();
 
@@ -97,7 +95,6 @@ export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
             setActiveDrawingId(drawingId);
             setShowSaveForm(false);
             setSaveTitle('');
-            // Feedback de succès ?
         } catch (error) {
             console.error('Erreur lors de l\'enregistrement:', error);
         } finally {
@@ -274,16 +271,16 @@ export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
     return (
         <div className="fixed inset-0 z-[60] bg-black flex flex-col">
             {/* Header */}
-            <div className="p-4 flex justify-between items-center text-white bg-black/50 backdrop-blur-md absolute top-0 left-0 right-0 z-10 border-b border-white/5">
-                <button onClick={onCancel} className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors">
+            <div className="p-4 flex justify-between items-center text-white bg-gradient-to-b from-black/80 to-transparent absolute top-0 left-0 right-0 z-10">
+                <button onClick={onCancel} className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors backdrop-blur-md">
                     <X size={24} />
                 </button>
-                <div className="text-sm font-bold uppercase tracking-widest text-white/70">Scanner</div>
+                
                 <div className="flex items-center gap-2">
-                    {imageFile && !activeDrawingId && (
+                    {imageSrc && !activeDrawingId && (
                         <button
                             onClick={() => setShowSaveForm(true)}
-                            className="p-2 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
+                            className="p-2 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-lg backdrop-blur-md"
                             title="Enregistrer"
                         >
                             <Save size={20} />
@@ -291,16 +288,25 @@ export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
                     )}
                     <button
                         onClick={() => setShowHistory(true)}
-                        className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
-                        title="Mes Dessins"
+                        className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors backdrop-blur-md"
+                        title="Historique"
                     >
                         <History size={24} />
                     </button>
+                    {imageSrc && (
+                        <button
+                            onClick={resetView}
+                            className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors backdrop-blur-md"
+                            title="Réinitialiser"
+                        >
+                            <RotateCcw size={20} />
+                        </button>
+                    )}
                 </div>
             </div>
 
             {/* Main Area */}
-            <div className="flex-1 flex items-center justify-center overflow-hidden bg-black/95 relative">
+            <div className="flex-1 flex items-center justify-center overflow-hidden bg-black relative">
                 {!imageSrc ? (
                     <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}
@@ -309,21 +315,20 @@ export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
                     >
                         <div className="relative mx-auto w-32 h-32">
                             <div className="absolute inset-0 bg-primary/20 rounded-full animate-pulse" />
-                            <div className="absolute inset-2 bg-primary/20 rounded-full animate-ping" />
                             <div className="absolute inset-0 bg-gradient-to-br from-primary to-indigo-600 rounded-full flex items-center justify-center shadow-2xl">
                                 <Camera size={54} className="text-white" />
                             </div>
                         </div>
 
                         <div className="space-y-3">
-                            <h3 className="text-2xl font-bold text-white">Scanner une couleur</h3>
-                            <p className="text-white/50 text-base leading-relaxed">Prenez une photo de votre crayon ou de votre œuvre pour isoler une teinte précise.</p>
+                            <h3 className="text-2xl font-bold text-white">Prêt à scanner ?</h3>
+                            <p className="text-white/50 text-base leading-relaxed">Importez une photo pour identifier instantanément les couleurs.</p>
                         </div>
 
                         <div className="space-y-4 pt-4">
-                            <label className="flex items-center justify-center gap-3 w-full py-4 bg-white text-black font-bold rounded-2xl shadow-xl cursor-pointer hover:bg-white/90 active:scale-95 transition-all">
-                                <Camera size={20} />
-                                Ouvrir l'appareil photo
+                            <label className="flex items-center justify-center gap-3 w-full py-4 bg-primary text-primary-foreground font-black rounded-2xl shadow-xl cursor-pointer hover:bg-primary/90 active:scale-95 transition-all">
+                                <Plus size={24} />
+                                CHOISIR UNE PHOTO
                                 <input type="file" accept="image/*" onChange={handleImageUploadWrapper} className="hidden" />
                             </label>
 
@@ -332,7 +337,7 @@ export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
                                 className="flex items-center justify-center gap-3 w-full py-4 bg-white/5 text-white/80 font-semibold rounded-2xl border border-white/10 hover:bg-white/10 active:scale-95 transition-all"
                             >
                                 <History size={20} />
-                                Utiliser un dessin existant
+                                Mes dessins récents
                             </button>
                         </div>
                     </motion.div>
@@ -342,61 +347,16 @@ export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
                         className="relative w-full h-full flex items-center justify-center touch-none overflow-hidden"
                         {...bindGestures()}
                     >
-                        {/* Toolbar - Below Header */}
-                        <div className="absolute top-20 right-4 z-20 flex flex-col gap-2 pointer-events-auto">
-                            <button
-                                onClick={togglePipetteMode}
-                                className={cn(
-                                    "p-3 rounded-full shadow-lg transition-all duration-200 backdrop-blur-md",
-                                    isPipetteMode
-                                        ? "bg-primary text-primary-foreground ring-2 ring-primary ring-offset-2"
-                                        : "bg-white/10 hover:bg-white/20 text-white border border-white/10"
-                                )}
-                                title={isPipetteMode ? "Désactiver la pipette" : "Activer la pipette"}
-                            >
-                                <Pipette size={20} />
-                            </button>
-
-                            {transform.scale > 1.1 && (
-                                <motion.button
-                                    initial={{ opacity: 0, scale: 0.8 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    exit={{ opacity: 0, scale: 0.8 }}
-                                    onClick={resetView}
-                                    className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-full shadow-lg backdrop-blur-md transition-colors border border-white/10"
-                                    title="Réinitialiser la vue"
-                                >
-                                    <RotateCcw size={20} />
-                                </motion.button>
-                            )}
-                        </div>
-
-                        {/* Scanner Button (Float bottom) only in Pipette Mode */}
-                        <AnimatePresence>
-                            {isPipetteMode && (
-                                <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
-                                    <motion.div
-                                        initial={{ y: 20, opacity: 0 }}
-                                        animate={{ y: 0, opacity: 1 }}
-                                        exit={{ y: 20, opacity: 0 }}
-                                        className="bg-black/50 backdrop-blur-md text-white px-4 py-2 rounded-full border border-white/10 text-sm font-medium shadow-lg"
-                                    >
-                                        Mode Scanner actif
-                                    </motion.div>
-                                </div>
-                            )}
-                        </AnimatePresence>
-
                         {/* LOUPE */}
                         <AnimatePresence>
-                            {loupe && isPipetteMode && (
+                            {loupe && (
                                 <motion.div
                                     initial={{ scale: 0, opacity: 0 }}
                                     animate={{ scale: 1, opacity: 1 }}
                                     exit={{ scale: 0, opacity: 0 }}
                                     style={{
                                         left: loupe.x,
-                                        top: loupe.y - 20, // Ajustement visuel pour le centre de la loupe
+                                        top: loupe.y - 20,
                                     }}
                                     className="absolute z-50 pointer-events-none -translate-x-1/2 -translate-y-1/2"
                                 >
@@ -447,19 +407,18 @@ export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
                         {/* Canvas caché pour lecture */}
                         <canvas ref={refs.canvasRef} className="hidden" />
 
-                        {/* Bouton de recentrage automatique */}
-                        {showAutoCenterButton && (
+                        {/* Bouton de recentrage automatique (Plus discret) */}
+                        {showAutoCenterButton && !loupe && (
                             <button
                                 onClick={autoCenterDrawing}
                                 disabled={isAutoCentering}
-                                className="absolute top-4 left-4 bg-white/10 backdrop-blur-md text-white px-4 py-2 rounded-xl hover:bg-white/20 transition-all flex items-center gap-2 border border-white/20"
+                                className="absolute bottom-6 right-6 bg-white/10 backdrop-blur-md text-white/70 p-3 rounded-full hover:bg-white/20 transition-all border border-white/10"
                             >
                                 {isAutoCentering ? (
-                                    <Loader2 className="animate-spin" size={16} />
+                                    <Loader2 className="animate-spin" size={20} />
                                 ) : (
-                                    <Camera size={16} />
+                                    <Camera size={20} />
                                 )}
-                                Recentrer le dessin
                             </button>
                         )}
                     </div>
