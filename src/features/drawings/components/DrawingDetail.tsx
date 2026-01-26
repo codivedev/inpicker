@@ -4,6 +4,7 @@ import { ArrowLeft, Plus, Trash2, Image as ImageIcon, Pencil, Search, Loader2 } 
 import { useNavigate, useParams } from 'react-router-dom';
 import { useDrawings, useDrawing } from '../hooks/useDrawings';
 import { cloudflareApi } from '@/lib/cloudflare-api';
+import { findTopMatches } from '@/lib/color-utils';
 import pencilsData from '@/data/pencils.json';
 import { PencilPicker } from './PencilPicker';
 import { ZoomableImage } from './ZoomableImage';
@@ -102,45 +103,15 @@ export function DrawingDetail() {
     // Construire l'URL de l'image
     const imageUrl = drawing.image_r2_key ? cloudflareApi.getImageUrl(drawing.image_r2_key) : null;
 
-    // Fonction de recherche du crayon le plus proche (Algorithme de distance euclidienne simple)
-    const findClosestPencil = (hexColor: string) => {
-        // Conversion hex à rgb
-        const r = parseInt(hexColor.slice(1, 3), 16);
-        const g = parseInt(hexColor.slice(3, 5), 16);
-        const b = parseInt(hexColor.slice(5, 7), 16);
-
-        let minDistance = Infinity;
-        let closest = null;
-
-        pencilsData.forEach(pencil => {
-            const pr = parseInt(pencil.hex.slice(1, 3), 16);
-            const pg = parseInt(pencil.hex.slice(3, 5), 16);
-            const pb = parseInt(pencil.hex.slice(5, 7), 16);
-
-            const distance = Math.sqrt(
-                Math.pow(r - pr, 2) +
-                Math.pow(g - pg, 2) +
-                Math.pow(b - pb, 2)
-            );
-
-            if (distance < minDistance) {
-                minDistance = distance;
-                closest = pencil;
-            }
-        });
-
-        return { closest, distance: minDistance };
-    };
-
     const handleColorPick = (hex: string) => {
-        const result = findClosestPencil(hex);
-        if (result.closest) {
-            setPickedColor({ hex, matchedPencil: result.closest });
+        const matches = findTopMatches(hex, 1);
+        if (matches.length > 0) {
+            setPickedColor({ hex, matchedPencil: matches[0].pencil });
         }
     };
 
     // State pour la couleur pipetée
-    const [pickedColor, setPickedColor] = useState<{ hex: string, matchedPencil: typeof pencilsData[0] } | null>(null);
+    const [pickedColor, setPickedColor] = useState<{ hex: string, matchedPencil: any } | null>(null);
 
     return (
         <div className="min-h-screen bg-background pb-20">

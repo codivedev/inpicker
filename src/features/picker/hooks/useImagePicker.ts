@@ -82,9 +82,11 @@ export function useImagePicker(options: UseImagePickerOptions = {}) {
         const rect = image.getBoundingClientRect();
         if (rect.width === 0 || rect.height === 0) return null;
 
+        // Calculer la position relative dans l'élément affiché (incluant le zoom/pan via CSS)
         const relativeX = clientX - rect.left;
         const relativeY = clientY - rect.top;
 
+        // Convertir en coordonnées réelles de l'image (0 à naturalWidth/naturalHeight)
         const percentageX = relativeX / rect.width;
         const percentageY = relativeY / rect.height;
 
@@ -127,7 +129,8 @@ export function useImagePicker(options: UseImagePickerOptions = {}) {
                 const clientX = touchEvent.changedTouches ? touchEvent.changedTouches[0].clientX : (event as any).clientX;
                 const clientY = touchEvent.changedTouches ? touchEvent.changedTouches[0].clientY : (event as any).clientY;
 
-                const PICK_OFFSET = 80;
+                // Sur smartphone, on décale la loupe au dessus du doigt pour qu'elle ne soit pas cachée
+                const PICK_OFFSET = 100; 
                 const targetY = clientY - PICK_OFFSET;
 
                 const pixelData = getPixelColor(clientX, targetY);

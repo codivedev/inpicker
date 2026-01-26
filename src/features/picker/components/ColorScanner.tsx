@@ -1,13 +1,47 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Camera, Check, X, Save, History, Loader2, Image as ImageIcon } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useDrawings } from '@/features/drawings/hooks/useDrawings';
 import { cloudflareApi } from '@/lib/cloudflare-api';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Pipette, RotateCcw, Plus } from 'lucide-react';
+import { Pipette, RotateCcw } from 'lucide-react';
 import { useImagePicker } from '../hooks/useImagePicker';
 import { ColorResult } from './ColorResult';
 
+// Composant pour le rendu zoomé de la loupe
+function Magnifier({ sourceCanvas, pixelX, pixelY }: { sourceCanvas: HTMLCanvasElement | null, pixelX: number, pixelY: number }) {
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+
+    useEffect(() => {
+        if (!sourceCanvas || !canvasRef.current) return;
+        const ctx = canvasRef.current.getContext('2d');
+        if (!ctx) return;
+
+        // On dessine une zone de 11x11 pixels centrée sur pixelX, pixelY
+        // pour un effet de zoom "pixel art"
+        const size = 11;
+        const offset = Math.floor(size / 2);
+        
+        ctx.imageSmoothingEnabled = false;
+        ctx.clearRect(0, 0, 100, 100);
+        ctx.drawImage(
+            sourceCanvas,
+            pixelX - offset, pixelY - offset, size, size,
+            0, 0, 100, 100
+        );
+    }, [sourceCanvas, pixelX, pixelY]);
+
+    return (
+        <canvas 
+            ref={canvasRef} 
+            width={100} 
+            height={100} 
+            className="w-full h-full object-cover image-pixelated"
+            style={{ imageRendering: 'pixelated' }}
+        />
+    );
+}
 
 interface ColorScannerProps {
     onColorSelected: (hex: string) => void;
@@ -17,6 +51,7 @@ interface ColorScannerProps {
 export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
     console.log('ColorScanner component rendered'); // Debug
 
+    const navigate = useNavigate();
     const { drawings, createDrawing, loading: drawingsLoading } = useDrawings();
     
     // États pour l'enregistrement
@@ -74,7 +109,13 @@ export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
         if (drawing.image_r2_key) {
             // Update using the hook's image state through navigation
             const url = cloudflareApi.getImageUrl(drawing.image_r2_key);
-            window.location.href = `/scanner-couleur?drawingId=${drawing.id}&initialImage=${encodeURIComponent(url)}`;
+            navigate('/scanner-couleur', { 
+                state: { 
+                    drawingId: drawing.id, 
+                    initialImage: url 
+                }, 
+                replace: true 
+            });
         }
     };
 
@@ -353,23 +394,38 @@ export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
                                     initial={{ scale: 0, opacity: 0 }}
                                     animate={{ scale: 1, opacity: 1 }}
                                     exit={{ scale: 0, opacity: 0 }}
-                                     style={{
+                                    style={{
                                         left: loupe.x,
-                                        top: loupe.y, // Align with the actual pick position
+                                        top: loupe.y - 20, // Ajustement visuel pour le centre de la loupe
                                     }}
                                     className="absolute z-50 pointer-events-none -translate-x-1/2 -translate-y-1/2"
                                 >
                                     <div className="relative">
-                                        <div className="w-24 h-24 rounded-full border-4 border-white shadow-2xl flex items-center justify-center overflow-hidden bg-white">
-                                            <div className="w-full h-full" style={{ backgroundColor: loupe.color }} />
+                                        {/* Magnifier glass */}
+                                        <div className="w-32 h-32 rounded-full border-4 border-white shadow-2xl flex items-center justify-center overflow-hidden bg-black ring-4 ring-black/20">
+                                            <Magnifier 
+                                                sourceCanvas={refs.canvasRef.current} 
+                                                pixelX={loupe.pixelX} 
+                                                pixelY={loupe.pixelY} 
+                                            />
+                                            {/* Crosshair */}
+                                            <div className="absolute inset-0 flex items-center justify-center">
+                                                <div className="w-full h-[1px] bg-white/30 absolute" />
+                                                <div className="w-[1px] h-full bg-white/30 absolute" />
+                                                <div className="w-2 h-2 border border-white rounded-full" />
+                                            </div>
                                         </div>
-                                        <div className="absolute inset-0 flex items-center justify-center">
-                                            <Plus className="text-black/50 drop-shadow-sm" size={12} strokeWidth={3} />
-                                            <Plus className="absolute text-white/50 drop-shadow-sm" size={12} strokeWidth={2} />
-                                        </div>
-                                        <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-black/80 text-white text-xs font-mono px-2 py-1 rounded-md whitespace-nowrap">
+                                        
+                                        {/* Color label */}
+                                        <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 bg-black/80 backdrop-blur-md text-white text-[10px] font-bold px-3 py-1 rounded-full border border-white/20 whitespace-nowrap shadow-xl">
                                             {loupe.color}
                                         </div>
+
+                                        {/* Color indicator dot */}
+                                        <div 
+                                            className="absolute -top-2 -right-2 w-8 h-8 rounded-full border-2 border-white shadow-lg"
+                                            style={{ backgroundColor: loupe.color }}
+                                        />
                                     </div>
                                 </motion.div>
                             )}
@@ -406,14 +462,6 @@ export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
                                 Recentrer le dessin
                             </button>
                         )}
-
-                        {/* Bouton de détection manuelle pour debug */}
-                        <button
-                            onClick={() => detectDrawingBounds()}
-                            className="absolute top-4 right-4 bg-blue-500/20 backdrop-blur-md text-white px-3 py-2 rounded-lg hover:bg-blue-500/30 transition-all text-xs border border-blue-500/30"
-                        >
-                            🎯 Détecter
-                        </button>
                     </div>
                 )}
             </div>
@@ -579,7 +627,6 @@ export function ColorScanner({ onColorSelected, onCancel }: ColorScannerProps) {
                     color={pickedColor}
                     match={matchResult}
                     alternatives={alternatives}
-                    drawingId={activeDrawingId || undefined}
                     onConfirm={confirmColor}
                     isPicking={!!loupe}
                 />

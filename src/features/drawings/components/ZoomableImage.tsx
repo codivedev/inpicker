@@ -1,8 +1,40 @@
 import { useRef, useState, useEffect } from 'react';
 import { useGesture } from '@use-gesture/react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Pipette, RotateCcw, Crosshair, Plus } from 'lucide-react';
+import { Pipette, RotateCcw, Crosshair } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+// Composant pour le rendu zoomé de la loupe
+function Magnifier({ sourceCanvas, pixelX, pixelY }: { sourceCanvas: HTMLCanvasElement | null, pixelX: number, pixelY: number }) {
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+
+    useEffect(() => {
+        if (!sourceCanvas || !canvasRef.current) return;
+        const ctx = canvasRef.current.getContext('2d');
+        if (!ctx) return;
+
+        const size = 11;
+        const offset = Math.floor(size / 2);
+        
+        ctx.imageSmoothingEnabled = false;
+        ctx.clearRect(0, 0, 100, 100);
+        ctx.drawImage(
+            sourceCanvas,
+            pixelX - offset, pixelY - offset, size, size,
+            0, 0, 100, 100
+        );
+    }, [sourceCanvas, pixelX, pixelY]);
+
+    return (
+        <canvas 
+            ref={canvasRef} 
+            width={100} 
+            height={100} 
+            className="w-full h-full object-cover"
+            style={{ imageRendering: 'pixelated' }}
+        />
+    );
+}
 
 interface ZoomableImageProps {
     src: string;
@@ -50,7 +82,7 @@ export function ZoomableImage({ src, alt, onColorPick, className }: ZoomableImag
         setPosition({ x: 0, y: 0 });
     };
 
-    const [loupe, setLoupe] = useState<{ x: number, y: number, color: string } | null>(null);
+    const [loupe, setLoupe] = useState<{ x: number, y: number, color: string, pixelX: number, pixelY: number } | null>(null);
 
     const getPixelColor = (clientX: number, clientY: number) => {
         const image = imageRef.current;
@@ -58,115 +90,73 @@ export function ZoomableImage({ src, alt, onColorPick, className }: ZoomableImag
         if (!image || !canvas) return null;
 
         const rect = image.getBoundingClientRect();
+        if (rect.width === 0 || rect.height === 0) return null;
 
-        // Coordonnées relatives au conteneur (pour l'affichage de la loupe)
-        // Mais pour le canvas, il faut compenser les transforms CSS
+        const relativeX = clientX - rect.left;
+        const relativeY = clientY - rect.top;
 
-        const centerX = image.naturalWidth / 2;
-        const centerY = image.naturalHeight / 2;
-
-        // Position de la souris par rapport au centre de l'élément transformé
-        const domCenterX = rect.left + rect.width / 2;
-        const domCenterY = rect.top + rect.height / 2;
-
-        const relativeToCenterX = clientX - domCenterX;
-        const relativeToCenterY = clientY - domCenterY;
-
-        // On compense le scale pour revenir aux coords natives
-        const unscaledX = relativeToCenterX / scale;
-        const unscaledY = relativeToCenterY / scale;
-
-        const pixelX = Math.floor(centerX + unscaledX);
-        const pixelY = Math.floor(centerY + unscaledY);
+        const pixelX = Math.floor((relativeX / rect.width) * image.naturalWidth);
+        const pixelY = Math.floor((relativeY / rect.height) * image.naturalHeight);
 
         const ctx = canvas.getContext('2d', { willReadFrequently: true });
         if (ctx) {
             const safeX = Math.max(0, Math.min(pixelX, image.naturalWidth - 1));
             const safeY = Math.max(0, Math.min(pixelY, image.naturalHeight - 1));
             const pixelData = ctx.getImageData(safeX, safeY, 1, 1).data;
-            return `#${[pixelData[0], pixelData[1], pixelData[2]]
+            const hex = `#${[pixelData[0], pixelData[1], pixelData[2]]
                 .map(x => x.toString(16).padStart(2, '0'))
-                .join('')}`;
+                .join('')}`.toUpperCase();
+            return { hex, pixelX: safeX, pixelY: safeY };
         }
         return null;
     };
 
     const pickColorAtCenter = () => {
-        const image = imageRef.current;
-        const canvas = canvasRef.current;
-        if (!image || !canvas || !onColorPick) return;
-
-        // Le centre de l'écran (reticle) correspond au centre du conteneur.
-        // L'image est centrée par défaut (flex center).
-        // La transformation est : translate(pos) scale(scale) appliquée au centre de l'image.
-        // Donc le point sous le centre de l'écran est simplement l'inverse de la translation, déséchelée.
-
-        // Coordonnées du centre de l'image native
-        const centerX = image.naturalWidth / 2;
-        const centerY = image.naturalHeight / 2;
-
-        // Décalage du centre dû au pan (position), corrigé par le scale
-        const offsetX = -position.x / scale;
-        const offsetY = -position.y / scale;
-
-        // Pixel ciblé
-        const pixelX = Math.floor(centerX + offsetX);
-        const pixelY = Math.floor(centerY + offsetY);
-
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-            // Sécurité bornes
-            const safeX = Math.max(0, Math.min(pixelX, image.naturalWidth - 1));
-            const safeY = Math.max(0, Math.min(pixelY, image.naturalHeight - 1));
-
-            const pixelData = ctx.getImageData(safeX, safeY, 1, 1).data;
-            const hex = `#${[pixelData[0], pixelData[1], pixelData[2]]
-                .map(x => x.toString(16).padStart(2, '0'))
-                .join('')}`;
-
-            onColorPick(hex);
+        const container = containerRef.current;
+        if (!container) return;
+        const rect = container.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        const colorData = getPixelColor(centerX, centerY);
+        if (colorData && onColorPick) {
+            onColorPick(colorData.hex);
         }
     };
 
     const bind = useGesture({
         onDrag: ({ last, event, offset: [ox, oy], touches, pinching, cancel }) => {
-            // Empêcher le comportement par défaut (scroll, etc)
             if (event.cancelable) event.preventDefault();
 
-            // S'assurer qu'on utilise le nombre de doigts réel du navigateur si dispo
-            // "touches" de useGesture est parfois la valeur au début du geste
             const realTouches = (event as TouchEvent).touches ? (event as TouchEvent).touches.length : touches;
 
-            // GESTION DU ZOOM/PAN (2 doigts, ou pinching actif, ou mode Vue)
             if (realTouches > 1 || pinching || !isPipetteMode) {
-                if (loupe) setLoupe(null); // Cacher la loupe immédiatement
-                if (isPipetteMode && realTouches > 1) cancel(); // Annuler le drag si on passe à 2 doigts
+                if (loupe) setLoupe(null);
+                if (isPipetteMode && realTouches > 1) cancel();
 
                 setPosition({ x: ox, y: oy });
                 return;
             }
 
-            // GESTION DE LA LOUPE (1 doigt + Mode Pipette)
             if (isPipetteMode && realTouches === 1) {
                 // @ts-ignore
                 const clientX = event.changedTouches ? event.changedTouches[0].clientX : event.clientX;
                 // @ts-ignore
                 const clientY = event.changedTouches ? event.changedTouches[0].clientY : event.clientY;
 
-                // Mettre à jour la loupe
-                const color = getPixelColor(clientX, clientY);
-                if (color) {
+                const colorData = getPixelColor(clientX, clientY);
+                if (colorData) {
                     const rect = containerRef.current?.getBoundingClientRect();
                     if (rect) {
                         setLoupe({
                             x: clientX - rect.left,
                             y: clientY - rect.top,
-                            color
+                            color: colorData.hex,
+                            pixelX: colorData.pixelX,
+                            pixelY: colorData.pixelY
                         });
                     }
                 }
 
-                // Si on relâche, on valide la couleur
                 if (last && loupe && onColorPick) {
                     onColorPick(loupe.color);
                     setLoupe(null);
@@ -263,25 +253,28 @@ export function ZoomableImage({ src, alt, onColorPick, className }: ZoomableImag
                         className="absolute z-50 pointer-events-none -translate-x-1/2 -translate-y-1/2"
                     >
                         <div className="relative">
-                            {/* Cercle Loupe */}
-                            <div
-                                className="w-24 h-24 rounded-full border-4 border-white shadow-2xl flex items-center justify-center overflow-hidden bg-white"
-                            >
-                                {/* Couleur actuelle (Remplissage) */}
-                                <div
-                                    className="w-full h-full"
-                                    style={{ backgroundColor: loupe.color }}
+                            {/* Magnifier glass */}
+                            <div className="w-32 h-32 rounded-full border-4 border-white shadow-2xl flex items-center justify-center overflow-hidden bg-black ring-4 ring-black/20">
+                                <Magnifier 
+                                    sourceCanvas={canvasRef.current} 
+                                    pixelX={loupe.pixelX} 
+                                    pixelY={loupe.pixelY} 
                                 />
+                                {/* Crosshair central */}
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                    <div className="w-full h-[1px] bg-white/30 absolute" />
+                                    <div className="w-[1px] h-full bg-white/30 absolute" />
+                                    <div className="w-2 h-2 border border-white rounded-full" />
+                                </div>
                             </div>
+                            
+                            {/* Color indicator dot */}
+                            <div 
+                                className="absolute -top-2 -right-2 w-8 h-8 rounded-full border-2 border-white shadow-lg"
+                                style={{ backgroundColor: loupe.color }}
+                            />
 
-                            {/* Réticule au centre de la loupe */}
-                            <div className="absolute inset-0 flex items-center justify-center">
-                                <Plus className="text-black/50 drop-shadow-sm" size={12} strokeWidth={3} />
-                                <Plus className="absolute text-white/50 drop-shadow-sm" size={12} strokeWidth={2} />
-                            </div>
-
-                            {/* Code Hex sous la loupe */}
-                            <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-black/80 text-white text-xs font-mono px-2 py-1 rounded-md whitespace-nowrap">
+                            <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 bg-black/80 backdrop-blur-md text-white text-[10px] font-bold px-3 py-1 rounded-full border border-white/20 whitespace-nowrap shadow-xl">
                                 {loupe.color}
                             </div>
                         </div>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { ArrowLeft, Image as ImageIcon, Save, History, Loader2, X, Check, Plus, Pipette } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDrawings } from '@/features/drawings/hooks/useDrawings';
@@ -8,6 +8,38 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useImagePicker } from '../hooks/useImagePicker';
 import { ColorResult } from './ColorResult';
 import { PremiumToolDrawer } from './PremiumToolDrawer';
+
+// Composant pour le rendu zoomé de la loupe
+function Magnifier({ sourceCanvas, pixelX, pixelY }: { sourceCanvas: HTMLCanvasElement | null, pixelX: number, pixelY: number }) {
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+
+    useEffect(() => {
+        if (!sourceCanvas || !canvasRef.current) return;
+        const ctx = canvasRef.current.getContext('2d');
+        if (!ctx) return;
+
+        const size = 11;
+        const offset = Math.floor(size / 2);
+        
+        ctx.imageSmoothingEnabled = false;
+        ctx.clearRect(0, 0, 100, 100);
+        ctx.drawImage(
+            sourceCanvas,
+            pixelX - offset, pixelY - offset, size, size,
+            0, 0, 100, 100
+        );
+    }, [sourceCanvas, pixelX, pixelY]);
+
+    return (
+        <canvas 
+            ref={canvasRef} 
+            width={100} 
+            height={100} 
+            className="w-full h-full object-cover"
+            style={{ imageRendering: 'pixelated' }}
+        />
+    );
+}
 
 interface LocationState {
     drawingId?: number;
@@ -89,6 +121,12 @@ const handleSaveDrawing = async () => {
             navigate(`/dessins/${state.drawingId}`);
         } else {
             navigate('/tableau-de-bord');
+        }
+    };
+
+    const confirmColor = () => {
+        if (pickedColor) {
+            navigate(-1);
         }
     };
 
@@ -260,21 +298,33 @@ const handleSaveDrawing = async () => {
                         exit={{ scale: 0, opacity: 0 }}
                          style={{
                             left: loupe.x,
-                            top: loupe.y, 
+                            top: loupe.y - 20, 
                         }}
                         className="fixed z-50 pointer-events-none -translate-x-1/2 -translate-y-1/2"
 
                     >
                         <div className="relative">
-                            <div className="w-28 h-28 rounded-full border-4 border-white shadow-2xl flex items-center justify-center overflow-hidden bg-white">
-                                <div className="w-full h-full" style={{ backgroundColor: loupe.color }} />
+                            <div className="w-32 h-32 rounded-full border-4 border-white shadow-2xl flex items-center justify-center overflow-hidden bg-black ring-4 ring-black/20">
+                                <Magnifier 
+                                    sourceCanvas={refs.canvasRef.current} 
+                                    pixelX={loupe.pixelX} 
+                                    pixelY={loupe.pixelY} 
+                                />
+                                {/* Crosshair central */}
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                    <div className="w-full h-[1px] bg-white/30 absolute" />
+                                    <div className="w-[1px] h-full bg-white/30 absolute" />
+                                    <div className="w-2 h-2 border border-white rounded-full" />
+                                </div>
                             </div>
-                            {/* Crosshair central */}
-                            <div className="absolute inset-0 flex items-center justify-center">
-                                <Plus className="text-black/30" size={16} strokeWidth={4} />
-                                <Plus className="absolute text-white/70" size={16} strokeWidth={2} />
-                            </div>
-                            <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-black/80 text-white text-xs font-mono px-2 py-1 rounded-md whitespace-nowrap shadow-lg">
+                            
+                            {/* Color indicator dot */}
+                            <div 
+                                className="absolute -top-2 -right-2 w-8 h-8 rounded-full border-2 border-white shadow-lg"
+                                style={{ backgroundColor: loupe.color }}
+                            />
+
+                            <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 bg-black/80 backdrop-blur-md text-white text-[10px] font-bold px-3 py-1 rounded-full border border-white/20 whitespace-nowrap shadow-xl">
                                 {loupe.color}
                             </div>
                         </div>
@@ -287,7 +337,7 @@ const handleSaveDrawing = async () => {
                 color={pickedColor}
                 match={matchResult}
                 alternatives={alternatives}
-                drawingId={activeDrawingId || undefined}
+                onConfirm={confirmColor}
                 isPicking={!!loupe}
             />
 
