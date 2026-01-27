@@ -34,7 +34,8 @@ export async function onRequestPost(context: CloudflareContext) {
         const id = name.toLowerCase().replace(/\s+/g, '-');
 
         await env.DB.prepare(
-            "INSERT INTO brands (id, name, user_id) VALUES (?, ?, ?)"
+            "INSERT INTO brands (id, name, user_id) VALUES (?, ?, ?) " +
+            "ON CONFLICT(id, user_id) DO NOTHING"
         ).bind(id, name, userId).run();
 
         return new Response(JSON.stringify({ success: true, id, name }), {

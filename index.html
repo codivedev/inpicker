@@ -7,6 +7,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#7c3aed" />
     <title>Inpicker - Scanner de Couleurs</title>
+    <script>
+      // Force unregister all service workers to fix caching issues
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          for(let registration of registrations) {
+            registration.unregister();
+          }
+        });
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

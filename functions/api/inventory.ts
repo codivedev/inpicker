@@ -32,7 +32,7 @@ export async function onRequestPost(context: CloudflareContext) {
         // On gère les deux flags de manière flexible
         await env.DB.prepare(
             "INSERT INTO inventory (id, brand, number, is_owned, is_hidden, user_id) VALUES (?, ?, ?, ?, ?, ?) " +
-            "ON CONFLICT(id) DO UPDATE SET " +
+            "ON CONFLICT(id, user_id) DO UPDATE SET " +
             "is_owned = COALESCE(?, is_owned), " +
             "is_hidden = COALESCE(?, is_hidden)"
         ).bind(

@@ -38,12 +38,15 @@ export async function onRequestPost(context: CloudflareContext) {
 
         await env.DB.prepare(
             "INSERT INTO custom_pencils (id, brand, name, number, hex, r, g, b, user_id) " +
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) " +
+            "ON CONFLICT(id, user_id) DO UPDATE SET " +
+            "name = EXCLUDED.name, hex = EXCLUDED.hex, r = EXCLUDED.r, g = EXCLUDED.g, b = EXCLUDED.b"
         ).bind(id, brand, name, number, hex, r, g, b, userId).run();
 
         // Marquer automatiquement comme possédé
         await env.DB.prepare(
-            "INSERT INTO inventory (id, brand, number, is_owned, user_id) VALUES (?, ?, ?, 1, ?)"
+            "INSERT INTO inventory (id, brand, number, is_owned, user_id) VALUES (?, ?, ?, 1, ?) " +
+            "ON CONFLICT(id, user_id) DO UPDATE SET is_owned = 1"
         ).bind(id, brand, number, userId).run();
 
         return new Response(JSON.stringify({ success: true, id }), {
