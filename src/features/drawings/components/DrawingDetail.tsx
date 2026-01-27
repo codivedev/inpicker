@@ -61,12 +61,12 @@ export function DrawingDetail() {
 
     // Récupérer les infos des crayons associés (supporte les deux formats: brand-id et brand|id)
     const pencilsInDrawing = drawing.pencilIds.map(pencilId => {
-        // Essayer d'abord avec le tiret (nouveau format)
-        let lastSepIndex = pencilId.lastIndexOf('-');
+        // Essayer d'abord avec le pipe (nouveau format)
+        let lastSepIndex = pencilId.lastIndexOf('|');
 
-        // Si pas de tiret, essayer avec pipe (ancien format)
+        // Si pas de pipe, essayer avec tiret (ancien format)
         if (lastSepIndex === -1) {
-            lastSepIndex = pencilId.lastIndexOf('|');
+            lastSepIndex = pencilId.lastIndexOf('-');
         }
 
         if (lastSepIndex === -1) return null;
@@ -234,7 +234,7 @@ export function DrawingDetail() {
                                     </div>
                                     <button
                                         onClick={() => {
-                                            const pencilId = `${pickedColor.matchedPencil.brand}-${pickedColor.matchedPencil.id}`;
+                                            const pencilId = `${pickedColor.matchedPencil.brand}|${pickedColor.matchedPencil.id}`;
                                             addPencilToDrawing(drawingId, pencilId);
                                             setPickedColor(null);
                                         }}

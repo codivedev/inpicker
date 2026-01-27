@@ -225,8 +225,8 @@ export function InventoryManager() {
                                 const owned = isOwned(pencil);
                                 return (
                                     <motion.div
-                                        key={`${pencil.brand}-${pencil.id}`}
-                                        layoutId={`${pencil.brand}-${pencil.id}`}
+                                        key={pencil.isCustom ? `custom-${pencil.brand}-${pencil.id}` : `static-${pencil.brand}-${pencil.id}`}
+                                        layoutId={pencil.isCustom ? `custom-${pencil.brand}-${pencil.id}` : `static-${pencil.brand}-${pencil.id}`}
                                         onClick={() => togglePencil(pencil)}
                                         className={cn(
                                             "flex items-center p-3 rounded-xl cursor-pointer transition-all active:scale-[0.98]",

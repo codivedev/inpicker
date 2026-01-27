@@ -29,6 +29,11 @@ export async function onRequestPost(context: CloudflareContext) {
         const userId = await getUserFromContext(context);
         const { brand, name, number, hex } = await request.json();
 
+        // Validation stricte du numéro pour éviter les conflits
+        if (!number || number.trim() === "") {
+            throw new Error("Le numéro (ID) du crayon est requis");
+        }
+
         // Conversion hex -> RGB
         const r = parseInt(hex.slice(1, 3), 16);
         const g = parseInt(hex.slice(3, 5), 16);
@@ -43,10 +48,10 @@ export async function onRequestPost(context: CloudflareContext) {
             "name = EXCLUDED.name, hex = EXCLUDED.hex, r = EXCLUDED.r, g = EXCLUDED.g, b = EXCLUDED.b"
         ).bind(id, brand, name, number, hex, r, g, b, userId).run();
 
-        // Marquer automatiquement comme possédé
+        // Marquer automatiquement comme possédé et S'ASSURER qu'il n'est pas caché
         await env.DB.prepare(
-            "INSERT INTO inventory (id, brand, number, is_owned, user_id) VALUES (?, ?, ?, 1, ?) " +
-            "ON CONFLICT(id, user_id) DO UPDATE SET is_owned = 1"
+            "INSERT INTO inventory (id, brand, number, is_owned, is_hidden, user_id) VALUES (?, ?, ?, 1, 0, ?) " +
+            "ON CONFLICT(id, user_id) DO UPDATE SET is_owned = 1, is_hidden = 0"
         ).bind(id, brand, number, userId).run();
 
         return new Response(JSON.stringify({ success: true, id }), {
@@ -113,11 +118,15 @@ export async function onRequestDelete(context: CloudflareContext) {
 
         if (!id) throw new Error("ID manquant");
 
+        // Format alternatif avec tiret (utilisé dans drawing_pencils parfois)
+        const idHyphen = id.replace('|', '-');
+
         await env.DB.batch([
             env.DB.prepare("DELETE FROM custom_pencils WHERE id = ? AND user_id = ?").bind(id, userId),
             env.DB.prepare("DELETE FROM inventory WHERE id = ? AND user_id = ?").bind(id, userId),
-            env.DB.prepare("DELETE FROM drawing_pencils WHERE pencil_id = ? AND drawing_id IN (SELECT id FROM drawings WHERE user_id = ?)")
-                .bind(id, userId)
+            // Nettoyage des références dans les dessins (les deux formats pour être sûr)
+            env.DB.prepare("DELETE FROM drawing_pencils WHERE (pencil_id = ? OR pencil_id = ?) AND drawing_id IN (SELECT id FROM drawings WHERE user_id = ?)")
+                .bind(id, idHyphen, userId)
         ]);
 
         return new Response(JSON.stringify({ success: true }), {

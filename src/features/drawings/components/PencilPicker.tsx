@@ -172,8 +172,8 @@ export function PencilPicker({ isOpen, onClose, onSelect, excludedPencilIds = []
                                     <p>Aucun crayon trouvé</p>
                                 </div>
                             ) : (
-                                filteredPencils.slice(0, 50).map(pencil => {
-                                    const pencilId = `${pencil.brand}-${pencil.id}`;
+                                    filteredPencils.slice(0, 500).map(pencil => {
+                                        const pencilId = `${pencil.brand}|${pencil.id}`;
                                     const owned = isOwned(pencil as any);
                                     const isSelected = selectedPencils.includes(pencilId);
 
@@ -221,9 +221,9 @@ export function PencilPicker({ isOpen, onClose, onSelect, excludedPencilIds = []
                                 })
                             )}
 
-                            {filteredPencils.length > 50 && (
+                            {filteredPencils.length > 500 && (
                                 <p className="text-center text-xs text-muted-foreground py-2">
-                                    + {filteredPencils.length - 50} autres crayons (affinez votre recherche)
+                                    + {filteredPencils.length - 500} autres crayons (affinez votre recherche)
                                 </p>
                             )}
                         </div>
